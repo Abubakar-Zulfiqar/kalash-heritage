@@ -14,14 +14,14 @@ export class Cart {
   @PrimaryGeneratedColumn("uuid")
   id!: string;
 
-  @ManyToOne("User", "carts", { onDelete: "CASCADE" })
+  @ManyToOne(() => import("./User").then(m => m.User), (user: any) => user.carts, { onDelete: "CASCADE" })
   @JoinColumn({ name: "userId" })
   user!: any;
 
   @Column()
   userId!: string;
 
-  @OneToMany("CartItem", "cart", { cascade: true })
+  @OneToMany(() => import("./CartItem").then(m => m.CartItem), (item: any) => item.cart, { cascade: true })
   items!: any[];
 
   @Column({ default: "USD" })

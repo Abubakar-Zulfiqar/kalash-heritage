@@ -85,7 +85,7 @@ export class Product {
   @Column({ type: "text", nullable: true })
   metaDescription?: string;
 
-  @ManyToOne("Category", "products", {
+  @ManyToOne(() => import("./Category").then(m => m.Category), (category: any) => category.products, {
     onDelete: "SET NULL",
   })
   @JoinColumn({ name: "categoryId" })

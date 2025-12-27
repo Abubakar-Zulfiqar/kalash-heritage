@@ -24,7 +24,7 @@ export class Category {
   @Column({ nullable: true })
   image?: string;
 
-  @OneToMany("Product", "category")
+  @OneToMany(() => import("./Product").then(m => m.Product), (product: any) => product.category)
   products!: any[];
 
   @CreateDateColumn()

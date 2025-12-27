@@ -13,14 +13,14 @@ export class CartItem {
   @PrimaryGeneratedColumn("uuid")
   id!: string;
 
-  @ManyToOne("Cart", "items", { onDelete: "CASCADE" })
+  @ManyToOne(() => import("./Cart").then(m => m.Cart), (cart: any) => cart.items, { onDelete: "CASCADE" })
   @JoinColumn({ name: "cartId" })
   cart!: any;
 
   @Column()
   cartId!: string;
 
-  @ManyToOne("Product", { eager: true })
+  @ManyToOne(() => import("./Product").then(m => m.Product), { eager: true })
   @JoinColumn({ name: "productId" })
   product!: any;
 

@@ -13,7 +13,7 @@ export class ShippingAddress {
   @PrimaryGeneratedColumn("uuid")
   id!: string;
 
-  @ManyToOne("User", "addresses", { onDelete: "CASCADE" })
+  @ManyToOne(() => import("./User").then(m => m.User), (user: any) => user.addresses, { onDelete: "CASCADE" })
   @JoinColumn({ name: "userId" })
   user!: any;
 

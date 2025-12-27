@@ -33,17 +33,17 @@ export class Order {
   @Column({ unique: true })
   orderNumber!: string; // e.g., "KH-2025-0001"
 
-  @ManyToOne("User", "orders", { onDelete: "SET NULL" })
+  @ManyToOne(() => import("./User").then(m => m.User), (user: any) => user.orders, { onDelete: "SET NULL" })
   @JoinColumn({ name: "userId" })
   user!: any;
 
   @Column({ nullable: true })
   userId?: string;
 
-  @OneToMany("OrderItem", "order", { cascade: true })
+  @OneToMany(() => import("./OrderItem").then(m => m.OrderItem), (item: any) => item.order, { cascade: true })
   items!: any[];
 
-  @OneToOne("ShippingAddress", { cascade: true })
+  @OneToOne(() => import("./ShippingAddress").then(m => m.ShippingAddress), { cascade: true })
   @JoinColumn({ name: "shippingAddressId" })
   shippingAddress!: any;
 

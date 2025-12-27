@@ -12,14 +12,14 @@ export class OrderItem {
   @PrimaryGeneratedColumn("uuid")
   id!: string;
 
-  @ManyToOne("Order", "items", { onDelete: "CASCADE" })
+  @ManyToOne(() => import("./Order").then(m => m.Order), (order: any) => order.items, { onDelete: "CASCADE" })
   @JoinColumn({ name: "orderId" })
   order!: any;
 
   @Column()
   orderId!: string;
 
-  @ManyToOne("Product", { eager: true })
+  @ManyToOne(() => import("./Product").then(m => m.Product), { eager: true })
   @JoinColumn({ name: "productId" })
   product!: any;
 

@@ -36,13 +36,13 @@ export class User {
   @Column({ nullable: true })
   phone?: string;
 
-  @OneToMany("Order", "user")
+  @OneToMany(() => import("./Order").then(m => m.Order), (order: any) => order.user)
   orders!: any[];
 
-  @OneToMany("Cart", "user")
+  @OneToMany(() => import("./Cart").then(m => m.Cart), (cart: any) => cart.user)
   carts!: any[];
 
-  @OneToMany("ShippingAddress", "user")
+  @OneToMany(() => import("./ShippingAddress").then(m => m.ShippingAddress), (address: any) => address.user)
   addresses!: any[];
 
   @CreateDateColumn()
