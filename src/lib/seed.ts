@@ -9,6 +9,7 @@ import { User, UserRole } from "../entities/User";
 import bcrypt from "bcryptjs";
 import { generateSlug, generateSKU } from "./utils";
 
+
 export async function seedDatabase() {
   const db = await getDatabase();
 
