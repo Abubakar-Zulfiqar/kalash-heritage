@@ -8,21 +8,23 @@ import {
   JoinColumn,
   OneToMany,
 } from "typeorm";
+import type { User } from "./User";
+import type { CartItem } from "./CartItem";
 
 @Entity("carts")
 export class Cart {
   @PrimaryGeneratedColumn("uuid")
   id!: string;
 
-  @ManyToOne(() => import("./User").then(m => m.User), (user: any) => user.carts, { onDelete: "CASCADE" })
+  @ManyToOne(() => require("./User").User, (user: User) => user.carts, { onDelete: "CASCADE" })
   @JoinColumn({ name: "userId" })
-  user!: any;
+  user!: User;
 
   @Column()
   userId!: string;
 
-  @OneToMany(() => import("./CartItem").then(m => m.CartItem), (item: any) => item.cart, { cascade: true })
-  items!: any[];
+  @OneToMany(() => require("./CartItem").CartItem, (item: CartItem) => item.cart, { cascade: true })
+  items!: CartItem[];
 
   @Column({ default: "USD" })
   currency!: string;

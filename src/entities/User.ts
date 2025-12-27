@@ -6,6 +6,9 @@ import {
   UpdateDateColumn,
   OneToMany,
 } from "typeorm";
+import type { Order } from "./Order";
+import type { Cart } from "./Cart";
+import type { ShippingAddress } from "./ShippingAddress";
 
 export enum UserRole {
   CUSTOMER = "customer",
@@ -36,14 +39,14 @@ export class User {
   @Column({ nullable: true })
   phone?: string;
 
-  @OneToMany(() => import("./Order").then(m => m.Order), (order: any) => order.user)
-  orders!: any[];
+  @OneToMany(() => require("./Order").Order, (order: Order) => order.user)
+  orders!: Order[];
 
-  @OneToMany(() => import("./Cart").then(m => m.Cart), (cart: any) => cart.user)
-  carts!: any[];
+  @OneToMany(() => require("./Cart").Cart, (cart: Cart) => cart.user)
+  carts!: Cart[];
 
-  @OneToMany(() => import("./ShippingAddress").then(m => m.ShippingAddress), (address: any) => address.user)
-  addresses!: any[];
+  @OneToMany(() => require("./ShippingAddress").ShippingAddress, (address: ShippingAddress) => address.user)
+  addresses!: ShippingAddress[];
 
   @CreateDateColumn()
   createdAt!: Date;

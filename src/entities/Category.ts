@@ -6,6 +6,7 @@ import {
   UpdateDateColumn,
   OneToMany,
 } from "typeorm";
+import type { Product } from "./Product";
 
 @Entity("categories")
 export class Category {
@@ -24,8 +25,8 @@ export class Category {
   @Column({ nullable: true })
   image?: string;
 
-  @OneToMany(() => import("./Product").then(m => m.Product), (product: any) => product.category)
-  products!: any[];
+  @OneToMany(() => require("./Product").Product, (product: Product) => product.category)
+  products!: Product[];
 
   @CreateDateColumn()
   createdAt!: Date;

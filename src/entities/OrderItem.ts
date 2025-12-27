@@ -6,22 +6,24 @@ import {
   ManyToOne,
   JoinColumn,
 } from "typeorm";
+import type { Order } from "./Order";
+import type { Product } from "./Product";
 
 @Entity("order_items")
 export class OrderItem {
   @PrimaryGeneratedColumn("uuid")
   id!: string;
 
-  @ManyToOne(() => import("./Order").then(m => m.Order), (order: any) => order.items, { onDelete: "CASCADE" })
+  @ManyToOne(() => require("./Order").Order, (order: Order) => order.items, { onDelete: "CASCADE" })
   @JoinColumn({ name: "orderId" })
-  order!: any;
+  order!: Order;
 
   @Column()
   orderId!: string;
 
-  @ManyToOne(() => import("./Product").then(m => m.Product), { eager: true })
+  @ManyToOne(() => require("./Product").Product, { eager: true })
   @JoinColumn({ name: "productId" })
-  product!: any;
+  product!: Product;
 
   @Column()
   productId!: string;

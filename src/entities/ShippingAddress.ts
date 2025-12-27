@@ -7,15 +7,16 @@ import {
   ManyToOne,
   JoinColumn,
 } from "typeorm";
+import type { User } from "./User";
 
 @Entity("shipping_addresses")
 export class ShippingAddress {
   @PrimaryGeneratedColumn("uuid")
   id!: string;
 
-  @ManyToOne(() => import("./User").then(m => m.User), (user: any) => user.addresses, { onDelete: "CASCADE" })
+  @ManyToOne(() => require("./User").User, (user: User) => user.addresses, { onDelete: "CASCADE" })
   @JoinColumn({ name: "userId" })
-  user!: any;
+  user!: User;
 
   @Column({ nullable: true })
   userId?: string;

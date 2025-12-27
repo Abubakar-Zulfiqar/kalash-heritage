@@ -7,6 +7,7 @@ import {
   ManyToOne,
   JoinColumn,
 } from "typeorm";
+import type { Category } from "./Category";
 
 @Entity("products")
 export class Product {
@@ -85,11 +86,11 @@ export class Product {
   @Column({ type: "text", nullable: true })
   metaDescription?: string;
 
-  @ManyToOne(() => import("./Category").then(m => m.Category), (category: any) => category.products, {
+  @ManyToOne(() => require("./Category").Category, (category: Category) => category.products, {
     onDelete: "SET NULL",
   })
   @JoinColumn({ name: "categoryId" })
-  category!: any;
+  category!: Category;
 
   @Column({ nullable: true })
   categoryId?: string;

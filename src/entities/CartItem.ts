@@ -7,22 +7,24 @@ import {
   ManyToOne,
   JoinColumn,
 } from "typeorm";
+import type { Cart } from "./Cart";
+import type { Product } from "./Product";
 
 @Entity("cart_items")
 export class CartItem {
   @PrimaryGeneratedColumn("uuid")
   id!: string;
 
-  @ManyToOne(() => import("./Cart").then(m => m.Cart), (cart: any) => cart.items, { onDelete: "CASCADE" })
+  @ManyToOne(() => require("./Cart").Cart, (cart: Cart) => cart.items, { onDelete: "CASCADE" })
   @JoinColumn({ name: "cartId" })
-  cart!: any;
+  cart!: Cart;
 
   @Column()
   cartId!: string;
 
-  @ManyToOne(() => import("./Product").then(m => m.Product), { eager: true })
+  @ManyToOne(() => require("./Product").Product, { eager: true })
   @JoinColumn({ name: "productId" })
-  product!: any;
+  product!: Product;
 
   @Column()
   productId!: string;

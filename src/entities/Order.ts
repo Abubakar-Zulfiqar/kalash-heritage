@@ -9,6 +9,9 @@ import {
   OneToMany,
   OneToOne,
 } from "typeorm";
+import type { User } from "./User";
+import type { OrderItem } from "./OrderItem";
+import type { ShippingAddress } from "./ShippingAddress";
 
 export enum OrderStatus {
   PENDING = "pending",
@@ -33,19 +36,19 @@ export class Order {
   @Column({ unique: true })
   orderNumber!: string; // e.g., "KH-2025-0001"
 
-  @ManyToOne(() => import("./User").then(m => m.User), (user: any) => user.orders, { onDelete: "SET NULL" })
+  @ManyToOne(() => require("./User").User, (user: User) => user.orders, { onDelete: "SET NULL" })
   @JoinColumn({ name: "userId" })
-  user!: any;
+  user!: User;
 
   @Column({ nullable: true })
   userId?: string;
 
-  @OneToMany(() => import("./OrderItem").then(m => m.OrderItem), (item: any) => item.order, { cascade: true })
-  items!: any[];
+  @OneToMany(() => require("./OrderItem").OrderItem, (item: OrderItem) => item.order, { cascade: true })
+  items!: OrderItem[];
 
-  @OneToOne(() => import("./ShippingAddress").then(m => m.ShippingAddress), { cascade: true })
+  @OneToOne(() => require("./ShippingAddress").ShippingAddress, { cascade: true })
   @JoinColumn({ name: "shippingAddressId" })
-  shippingAddress!: any;
+  shippingAddress!: ShippingAddress;
 
   @Column({ nullable: true })
   shippingAddressId?: string;
