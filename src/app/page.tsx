@@ -18,7 +18,7 @@ export default function HomePage() {
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % bannerImages.length);
-    }, 5000); // Change slide every 5 seconds
+    }, 5000);
 
     return () => clearInterval(timer);
   }, [bannerImages.length]);
