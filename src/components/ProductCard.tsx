@@ -38,7 +38,7 @@ export default function ProductCard({ product }: ProductCardProps) {
       image: product.images[0],
       slug: product.slug,
     });
-    toast.success("Added to cart!");
+    toast.success("Added to inquiry list");
   };
 
   return (
@@ -55,12 +55,15 @@ export default function ProductCard({ product }: ProductCardProps) {
             SALE
           </div>
         )}
-        <button
-          onClick={handleAddToCart}
-          className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-white text-gray-900 px-6 py-2 font-semibold opacity-0 group-hover:opacity-100 transition-opacity duration-300 hover:bg-gray-100"
-        >
-          Add to Cart
-        </button>
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+          <button
+            onClick={handleAddToCart}
+            className="bg-white text-gray-900 px-4 py-2 text-sm font-semibold hover:bg-gray-100 border border-gray-300"
+            title="Add to inquiry list"
+          >
+            Inquire
+          </button>
+        </div>
       </div>
 
       <div>

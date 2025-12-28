@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useState } from "react";
 import { useCartStore } from "@/store/cartStore";
 import { useCurrencyStore } from "@/store/currencyStore";
@@ -14,12 +15,12 @@ export default function Header() {
   const currencies = CurrencyService.getSupportedCurrencies();
 
   return (
-    <header className="sticky top-0 z-50 bg-white border-b border-gray-200">
+    <header className="sticky top-0 z-50 bg-white/70 backdrop-blur-lg border-b border-white/20">
       <div className="container mx-auto px-4">
         {/* Top bar */}
         <div className="flex items-center justify-between py-2 text-sm border-b border-gray-100">
           <div className="text-gray-600">
-            Free shipping on orders over $500
+            Free worldwide shipping on all orders
           </div>
           <div className="flex items-center gap-4">
             <select
@@ -37,15 +38,16 @@ export default function Header() {
         </div>
 
         {/* Main navigation */}
-        <div className="flex items-center justify-between py-6">
+        <div className="flex items-center justify-between py-3">
           {/* Logo */}
-          <Link href="/" className="flex flex-col">
-            <h1 className="text-3xl font-serif font-bold text-gray-900">
-              Kalash Heritage
-            </h1>
-            <p className="text-xs text-gray-600 tracking-wide">
-              HANDMADE ORIENTAL RUGS
-            </p>
+          <Link href="/" className="relative h-12 w-40">
+            <Image
+              src="/kalaash-heritage-logo.png"
+              alt="Kalash Heritage - Handmade Oriental Rugs"
+              fill
+              className="object-contain object-left"
+              priority
+            />
           </Link>
 
           {/* Desktop Navigation */}

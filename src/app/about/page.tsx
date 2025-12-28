@@ -32,26 +32,29 @@ export default function AboutPage() {
             viewport={{ once: true }}
           >
             <h2 className="text-4xl font-serif font-bold text-gray-900 mb-6">
-              Heritage of Excellence
+              Three Generations of Heritage
             </h2>
-            <div className="space-y-4 text-lg text-gray-700 leading-relaxed">
-              <p>
-                For generations, the art of carpet weaving has been passed down through our family,
-                from skilled hands to eager apprentices. What began in the traditional workshops
-                of Pakistan has evolved into Kalash Heritage, a name trusted by collectors and
-                dealers worldwide.
-              </p>
-              <p>
-                Our journey represents more than just business—it's a commitment to preserving
-                an ancient craft while meeting the demands of modern aesthetics. Each rug that
-                leaves our factory carries with it centuries of tradition, innovation, and
-                unwavering dedication to quality.
-              </p>
-              <p>
-                Based in Lahore, Pakistan, with our head office in Dubai, we've built bridges
-                between traditional artisans and global markets, ensuring that this beautiful
-                heritage continues to flourish in homes around the world.
-              </p>
+            <div className="space-y-6 text-lg text-gray-700 leading-relaxed">
+              <div>
+                <h3 className="font-semibold text-xl text-gray-900 mb-2">Our Origins</h3>
+                <p>
+                  In the 1970s, <strong>Jora Ersari</strong> laid the foundation of a craft that would span generations—a tradition of weaving rugs with cultural depth and timeless elegance.
+                </p>
+              </div>
+
+              <div>
+                <h3 className="font-semibold text-xl text-gray-900 mb-2">A Family Legacy</h3>
+                <p>
+                  His son, <strong>Mohammad Abdullah</strong>, carried this vision forward under <em>Tribal Creation</em>, building a reputation for excellence. Today, we—<strong>Yunus Ersari</strong> and <strong>Yusuf Ersari</strong>—continue as the third generation, blending heritage with modern presentation.
+                </p>
+              </div>
+
+              <div>
+                <h3 className="font-semibold text-xl text-gray-900 mb-2">Global Trust</h3>
+                <p>
+                  Our work has reached homes, galleries, and institutions worldwide. We're honored to partner with <strong>Coco Republic Australia</strong>, <strong>Timothe Rugs</strong>, <strong>ABC Home</strong>, and many others—partnerships that reflect the trust placed in our heritage.
+                </p>
+              </div>
             </div>
           </motion.div>
 
@@ -61,10 +64,38 @@ export default function AboutPage() {
             viewport={{ once: true }}
             className="grid grid-cols-2 gap-4"
           >
-            <div className="aspect-square bg-gray-200 rounded-lg overflow-hidden"></div>
-            <div className="aspect-square bg-gray-300 rounded-lg overflow-hidden mt-8"></div>
-            <div className="aspect-square bg-gray-300 rounded-lg overflow-hidden -mt-8"></div>
-            <div className="aspect-square bg-gray-200 rounded-lg overflow-hidden"></div>
+            <div className="aspect-square bg-gray-200 rounded-lg overflow-hidden relative">
+              <Image
+                src="/data/process/MANUFACTURING PROCESS/Handweaving process/A.jpeg"
+                alt="Traditional handweaving process"
+                fill
+                className="object-cover"
+              />
+            </div>
+            <div className="aspect-square bg-gray-300 rounded-lg overflow-hidden mt-8 relative">
+              <Image
+                src="/data/process/MANUFACTURING PROCESS/Natural Drying of Dyed Wools/A.jpeg"
+                alt="Natural dyed wools drying in sunlight"
+                fill
+                className="object-cover"
+              />
+            </div>
+            <div className="aspect-square bg-gray-300 rounded-lg overflow-hidden -mt-8 relative">
+              <Image
+                src="/data/process/MANUFACTURING PROCESS/Wool Dying/A.jpeg"
+                alt="Traditional wool dyeing process"
+                fill
+                className="object-cover"
+              />
+            </div>
+            <div className="aspect-square bg-gray-200 rounded-lg overflow-hidden relative">
+              <Image
+                src="/data/WhatsApp Image 2025-12-26 at 15.27.19.jpeg"
+                alt="Artisans washing handwoven rugs"
+                fill
+                className="object-cover"
+              />
+            </div>
           </motion.div>
         </div>
       </section>
@@ -142,29 +173,34 @@ export default function AboutPage() {
           className="text-center mb-16"
         >
           <h2 className="text-4xl font-serif font-bold text-gray-900 mb-4">
-            Our Values
+            Our Mission
           </h2>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            The principles that guide everything we do
+          <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+            Kalash Heritage exists to preserve authenticity and build trust—not driven by profit, but by a commitment to cultural heritage and craftsmanship.
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
           {[
             {
-              title: "Authenticity",
+              title: "Preserve",
               description:
-                "Every rug is 100% handmade, preserving traditional techniques passed down through generations.",
+                "The art of handwoven rugs and kilims for future generations",
             },
             {
-              title: "Quality",
+              title: "Celebrate",
               description:
-                "We never compromise on materials or craftsmanship, ensuring each piece is a lasting investment.",
+                "The artisans and their timeless techniques",
             },
             {
-              title: "Trust",
+              title: "Build Trust",
               description:
-                "Transparency in our process and pricing builds lasting relationships with our customers worldwide.",
+                "Through transparency, heritage, and quality in every piece",
+            },
+            {
+              title: "Inspire",
+              description:
+                "Through cultural storytelling—rugs as artifacts of history and lifestyle",
             },
           ].map((value, index) => (
             <motion.div
@@ -173,106 +209,87 @@ export default function AboutPage() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: index * 0.1 }}
-              className="bg-gray-50 p-8 rounded-lg"
+              className="bg-gray-50 p-8 rounded-lg text-center"
             >
-              <h3 className="text-2xl font-serif font-bold text-gray-900 mb-4">
+              <h3 className="text-2xl font-serif font-bold text-gray-900 mb-3">
                 {value.title}
               </h3>
               <p className="text-gray-700 leading-relaxed">{value.description}</p>
             </motion.div>
           ))}
         </div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="mt-12 text-center max-w-3xl mx-auto"
+        >
+          <p className="text-lg text-gray-700 leading-relaxed italic border-l-4 border-primary-600 pl-6">
+            "Every rug is more than a product—it is a piece of heritage. Our values of integrity, craftsmanship, and cultural respect guide us beyond commerce, ensuring that Kalash Heritage remains a showcase of trust and tradition."
+          </p>
+        </motion.div>
       </section>
 
-      {/* Factory & Team */}
+      {/* Craftsmanship Showcase */}
       <section className="py-20 bg-primary-800 text-white">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-            >
-              <h2 className="text-4xl font-serif font-bold mb-6">
-                Our Manufacturing Excellence
-              </h2>
-              <p className="text-lg text-primary-100 mb-6 leading-relaxed">
-                Our state-of-the-art facility in Lahore, Pakistan combines traditional
-                craftsmanship with modern quality control. Here, over 200 skilled artisans
-                work daily, creating rugs that will be treasured for generations.
-              </p>
-              <div className="space-y-4">
-                <div className="flex items-start gap-3">
-                  <svg
-                    className="w-6 h-6 text-primary-300 flex-shrink-0 mt-1"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                  <div>
-                    <strong className="text-white">200+ Skilled Artisans</strong>
-                    <p className="text-primary-200">Master weavers and craftspeople</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <svg
-                    className="w-6 h-6 text-primary-300 flex-shrink-0 mt-1"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                  <div>
-                    <strong className="text-white">Global Reach</strong>
-                    <p className="text-primary-200">
-                      Exporting to 30+ countries worldwide
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <svg
-                    className="w-6 h-6 text-primary-300 flex-shrink-0 mt-1"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                  <div>
-                    <strong className="text-white">Sustainable Practices</strong>
-                    <p className="text-primary-200">
-                      Eco-friendly materials and processes
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            className="text-center mb-12"
+          >
+            <h2 className="text-4xl font-serif font-bold mb-4">
+              Authentic Pakistani & Afghani Craftsmanship
+            </h2>
+            <p className="text-lg text-primary-100 max-w-3xl mx-auto">
+              Rooted in the rich weaving traditions of Pakistan and Afghanistan, our artisans carry forward centuries of expertise—honoring regional techniques while creating timeless pieces for the world.
+            </p>
+          </motion.div>
 
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              whileInView={{ opacity: 1, x: 0 }}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="aspect-video bg-primary-900 rounded-lg overflow-hidden"
+              transition={{ delay: 0.1 }}
+              className="aspect-[4/5] bg-primary-900 rounded-lg overflow-hidden relative"
             >
-              {/* Placeholder for factory image */}
+              <Image
+                src="/data/jora/A  (2).jpeg"
+                alt="Artisan handwashing traditional rugs"
+                fill
+                className="object-cover"
+              />
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.2 }}
+              className="aspect-[4/5] bg-primary-900 rounded-lg overflow-hidden relative"
+            >
+              <Image
+                src="/data/WhatsApp Image 2025-12-26 at 15.28.22.jpeg"
+                alt="Handwoven oriental rug"
+                fill
+                className="object-cover"
+              />
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.3 }}
+              className="aspect-[4/5] bg-primary-900 rounded-lg overflow-hidden relative"
+            >
+              <Image
+                src="/data/process/MANUFACTURING PROCESS/Handweaving process/A  (2).jpeg"
+                alt="Traditional weaving techniques"
+                fill
+                className="object-cover"
+              />
             </motion.div>
           </div>
         </div>

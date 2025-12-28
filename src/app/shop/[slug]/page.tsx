@@ -109,7 +109,7 @@ export default function ProductDetailPage() {
       slug: product.slug,
       quantity,
     });
-    toast.success(`Added ${quantity} item(s) to cart!`);
+    toast.success(`Added ${quantity} piece(s) to your inquiry list`);
   };
 
   return (
@@ -288,7 +288,7 @@ export default function ProductDetailPage() {
               </div>
             </div>
 
-            {/* Quantity & Add to Cart */}
+            {/* Inquiry Actions */}
             <div className="mb-8">
               <div className="flex items-center gap-4 mb-4">
                 <label className="font-semibold text-gray-900">Quantity:</label>
@@ -312,17 +312,28 @@ export default function ProductDetailPage() {
                   </button>
                 </div>
                 <span className="text-sm text-gray-600">
-                  {product.stock} in stock
+                  {product.stock} available
                 </span>
               </div>
 
-              <button
-                onClick={handleAddToCart}
-                disabled={product.stock === 0}
-                className="w-full bg-primary-600 text-white py-4 rounded font-semibold text-lg hover:bg-primary-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
-              >
-                {product.stock === 0 ? "Out of Stock" : "Add to Cart"}
-              </button>
+              <div className="flex gap-3">
+                <button
+                  onClick={handleAddToCart}
+                  disabled={product.stock === 0}
+                  className="flex-1 bg-primary-600 text-white py-4 rounded font-semibold text-lg hover:bg-primary-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
+                >
+                  {product.stock === 0 ? "Currently Unavailable" : "Add to Inquiry List"}
+                </button>
+                <Link
+                  href="/contact"
+                  className="flex-1 bg-white border-2 border-primary-600 text-primary-600 py-4 rounded font-semibold text-lg hover:bg-primary-50 transition-colors text-center flex items-center justify-center"
+                >
+                  Contact About This Piece
+                </Link>
+              </div>
+              <p className="text-sm text-gray-600 mt-3 text-center">
+                Add to your inquiry list or contact us directly to discuss this heritage piece
+              </p>
             </div>
 
             {/* Features */}

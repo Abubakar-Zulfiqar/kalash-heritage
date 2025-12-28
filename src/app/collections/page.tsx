@@ -41,12 +41,14 @@ export default function CollectionsPage() {
             transition={{ duration: 0.6 }}
             className="text-center"
           >
+            <p className="text-sm md:text-base tracking-[0.3em] uppercase mb-4 text-primary-600 font-semibold">
+              Heritage Exhibition
+            </p>
             <h1 className="font-serif text-5xl md:text-6xl font-bold text-gray-900 mb-6">
-              Our Collections
+              Cultural Artifacts by Region
             </h1>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Explore our curated collections of handmade oriental rugs, each telling a unique story
-              of tradition, craftsmanship, and timeless beauty.
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+              Each collection represents a distinct cultural heritage—from the intricate traditions of Persian weaving to the bold geometric patterns of Afghani kilims. These are not merely decorative pieces, but historical artifacts preserving centuries of craftsmanship.
             </p>
           </motion.div>
         </div>
@@ -113,7 +115,7 @@ export default function CollectionsPage() {
                         {category.description || `Explore our ${category.name.toLowerCase()} collection`}
                       </p>
                       <div className="mt-4 flex items-center text-primary-600 font-medium">
-                        <span>Shop Collection</span>
+                        <span>View Collection</span>
                         <svg
                           className="w-5 h-5 ml-2 group-hover:translate-x-2 transition-transform"
                           fill="none"
@@ -154,16 +156,13 @@ export default function CollectionsPage() {
               viewport={{ once: true }}
             >
               <h2 className="font-serif text-4xl font-bold text-gray-900 mb-6">
-                Heritage Craftsmanship
+                Pakistani & Afghani Weaving Traditions
               </h2>
               <p className="text-gray-700 mb-6 leading-relaxed">
-                Each collection represents decades of traditional craftsmanship passed down through
-                generations. Our artisans in Pakistan create these masterpieces using time-honored
-                techniques, ensuring every rug is a unique work of art.
+                Each collection represents centuries of cultural heritage passed through three generations of our family. Our artisans honor time-honored Pakistani and Afghani techniques, ensuring every rug is a unique testament to regional craftsmanship.
               </p>
               <p className="text-gray-700 leading-relaxed">
-                From the intricate patterns of Persian carpets to the bold designs of modern rugs,
-                every collection tells a story of cultural heritage and artistic excellence.
+                From the intricate floral motifs of Persian-inspired carpets to the bold geometric patterns of traditional Afghani kilims, every collection preserves the distinct identity of its cultural origin—these are living artifacts of history.
               </p>
             </motion.div>
 
@@ -175,8 +174,8 @@ export default function CollectionsPage() {
               className="relative aspect-[4/3] rounded-lg overflow-hidden shadow-xl"
             >
               <Image
-                src="/placeholder-workshop.svg"
-                alt="Rug craftsmanship"
+                src="/data/process/MANUFACTURING PROCESS/Handweaving process/A  (4).jpeg"
+                alt="Traditional rug handweaving craftsmanship"
                 fill
                 className="object-cover"
               />
@@ -195,18 +194,25 @@ export default function CollectionsPage() {
             viewport={{ once: true }}
           >
             <h2 className="font-serif text-4xl font-bold text-gray-900 mb-6">
-              Can't Find What You're Looking For?
+              Interested in Learning More?
             </h2>
             <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-              We offer custom rug design services. Contact us to discuss your specific requirements
-              and bring your vision to life.
+              Whether you're a collector, interior designer, or simply appreciate cultural heritage, we welcome inquiries about our pieces, their history, and the artisans behind them.
             </p>
-            <Link
-              href="/contact"
-              className="inline-block bg-primary-600 text-white px-8 py-4 rounded hover:bg-primary-700 transition-colors font-medium text-lg"
-            >
-              Contact Us
-            </Link>
+            <div className="flex gap-4 justify-center flex-wrap">
+              <Link
+                href="/knowledge-hub"
+                className="inline-block bg-primary-600 text-white px-8 py-4 rounded hover:bg-primary-700 transition-colors font-medium text-lg"
+              >
+                Explore Our Craft
+              </Link>
+              <Link
+                href="/contact"
+                className="inline-block bg-white border-2 border-primary-600 text-primary-600 px-8 py-4 rounded hover:bg-primary-50 transition-colors font-medium text-lg"
+              >
+                Get in Touch
+              </Link>
+            </div>
           </motion.div>
         </div>
       </section>

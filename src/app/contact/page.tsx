@@ -28,7 +28,9 @@ export default function ContactPage() {
   };
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
   ) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
@@ -44,7 +46,8 @@ export default function ContactPage() {
           >
             <h1 className="text-5xl font-serif font-bold mb-4">Get In Touch</h1>
             <p className="text-xl text-gray-300 max-w-2xl mx-auto">
-              Have questions about our rugs or interested in bulk orders? We're here to help.
+              Have questions about our rugs or interested in bulk orders? We're
+              here to help.
             </p>
           </motion.div>
         </div>
@@ -140,9 +143,9 @@ export default function ContactPage() {
                   <br />
                   +971 50 195 4770
                   <br />
-                  +92 423 716 1776
+                  +92 332 466 7770
                   <br />
-                  +92 300 466 7770
+                  +92 344 470 1704
                 </p>
               </div>
 
@@ -165,17 +168,10 @@ export default function ContactPage() {
                   Email
                 </h3>
                 <a
-                  href="mailto:info@kalashheritage.com"
+                  href="mailto:heritagekalash@gmail.com"
                   className="text-primary-600 hover:text-primary-800"
                 >
-                  info@kalashheritage.com
-                </a>
-                <br />
-                <a
-                  href="mailto:kalashheritage@gmail.com"
-                  className="text-primary-600 hover:text-primary-800"
-                >
-                  kalashheritage@gmail.com
+                  heritagekalash@gmail.com
                 </a>
               </div>
 
@@ -334,6 +330,29 @@ export default function ContactPage() {
             </motion.div>
           </div>
         </div>
+
+        {/* Google Map */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="mt-16"
+        >
+          <h2 className="text-3xl font-serif font-bold text-gray-900 mb-6 text-center">
+            Visit Our Factory
+          </h2>
+          <div className="w-full h-[500px] rounded-lg overflow-hidden shadow-lg">
+            <iframe
+              src="https://maps.google.com/maps?q=31.574841,74.439903&output=embed"
+              width="100%"
+              height="100%"
+              style={{ border: 0 }}
+              allowFullScreen
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+            />
+          </div>
+        </motion.div>
       </div>
     </div>
   );
