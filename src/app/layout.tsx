@@ -4,6 +4,7 @@ import "../styles/globals.css";
 import { Toaster } from "react-hot-toast";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import WhatsAppWidget from "@/components/WhatsAppWidget";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const playfair = Playfair_Display({ subsets: ["latin"], variable: "--font-playfair" });
@@ -25,6 +26,7 @@ export default function RootLayout({
         <Header />
         {children}
         <Footer />
+        <WhatsAppWidget />
         <Toaster position="top-right" />
       </body>
     </html>

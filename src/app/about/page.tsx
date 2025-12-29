@@ -8,6 +8,14 @@ export default function AboutPage() {
     <div className="min-h-screen bg-white">
       {/* Hero Section */}
       <section className="relative h-[60vh] bg-gray-900 flex items-center justify-center overflow-hidden">
+        {/* Background Image */}
+        <Image
+          src="/data/banner-1.jpeg"
+          alt="Kalash Heritage craftsmanship"
+          fill
+          className="object-cover"
+          priority
+        />
         <div className="absolute inset-0 bg-gradient-to-b from-black/60 to-black/30 z-10" />
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -36,23 +44,41 @@ export default function AboutPage() {
             </h2>
             <div className="space-y-6 text-lg text-gray-700 leading-relaxed">
               <div>
-                <h3 className="font-semibold text-xl text-gray-900 mb-2">Our Origins</h3>
+                <h3 className="font-semibold text-xl text-gray-900 mb-2">
+                  Our Origins
+                </h3>
                 <p>
-                  In the 1970s, <strong>Jora Ersari</strong> laid the foundation of a craft that would span generations—a tradition of weaving rugs with cultural depth and timeless elegance.
+                  In the 1970s, <strong>Jora Ersari</strong> laid the foundation
+                  of a craft that would span generations—a tradition of weaving
+                  rugs with cultural depth and timeless elegance.
                 </p>
               </div>
 
               <div>
-                <h3 className="font-semibold text-xl text-gray-900 mb-2">A Family Legacy</h3>
+                <h3 className="font-semibold text-xl text-gray-900 mb-2">
+                  A Family Legacy
+                </h3>
                 <p>
-                  His son, <strong>Mohammad Abdullah</strong>, carried this vision forward under <em>Tribal Creation</em>, building a reputation for excellence. Today, we—<strong>Yunus Ersari</strong> and <strong>Yusuf Ersari</strong>—continue as the third generation, blending heritage with modern presentation.
+                  His son, <strong>Mohammad Abdullah</strong>, carried this
+                  vision forward under <em>Tribal Creation</em>, building a
+                  reputation for excellence. Today, we—
+                  <strong>Yunus Ersari</strong> and{" "}
+                  <strong>Yusuf Ersari</strong>—continue as the third
+                  generation, blending heritage with modern presentation.
                 </p>
               </div>
 
               <div>
-                <h3 className="font-semibold text-xl text-gray-900 mb-2">Global Trust</h3>
+                <h3 className="font-semibold text-xl text-gray-900 mb-2">
+                  Global Trust
+                </h3>
                 <p>
-                  Our work has reached homes, galleries, and institutions worldwide. We're honored to partner with <strong>Coco Republic Australia</strong>, <strong>Timothe Rugs</strong>, <strong>ABC Home</strong>, and many others—partnerships that reflect the trust placed in our heritage.
+                  Our work has reached homes, galleries, and institutions
+                  worldwide. We're honored to partner with{" "}
+                  <strong>Coco Republic Australia</strong>,{" "}
+                  <strong>Timothe Rugs</strong>, <strong>ABC Home</strong>, and
+                  many others—partnerships that reflect the trust placed in our
+                  heritage.
                 </p>
               </div>
             </div>
@@ -113,8 +139,8 @@ export default function AboutPage() {
               Our Craftsmanship
             </h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Every rug is a masterpiece, created through a meticulous process that honors
-              tradition while embracing quality.
+              Every rug is a masterpiece, created through a meticulous process
+              that honors tradition while embracing quality.
             </p>
           </motion.div>
 
@@ -156,7 +182,9 @@ export default function AboutPage() {
                 <div className="text-5xl font-serif font-bold text-primary-300 mb-4">
                   {item.step}
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">{item.title}</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                  {item.title}
+                </h3>
                 <p className="text-gray-600">{item.description}</p>
               </motion.div>
             ))}
@@ -176,7 +204,9 @@ export default function AboutPage() {
             Our Mission
           </h2>
           <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-            Kalash Heritage exists to preserve authenticity and build trust—not driven by profit, but by a commitment to cultural heritage and craftsmanship.
+            Kalash Heritage exists to preserve authenticity and build trust—not
+            driven by profit, but by a commitment to cultural heritage and
+            craftsmanship.
           </p>
         </motion.div>
 
@@ -189,8 +219,7 @@ export default function AboutPage() {
             },
             {
               title: "Celebrate",
-              description:
-                "The artisans and their timeless techniques",
+              description: "The artisans and their timeless techniques",
             },
             {
               title: "Build Trust",
@@ -214,7 +243,9 @@ export default function AboutPage() {
               <h3 className="text-2xl font-serif font-bold text-gray-900 mb-3">
                 {value.title}
               </h3>
-              <p className="text-gray-700 leading-relaxed">{value.description}</p>
+              <p className="text-gray-700 leading-relaxed">
+                {value.description}
+              </p>
             </motion.div>
           ))}
         </div>
@@ -226,7 +257,10 @@ export default function AboutPage() {
           className="mt-12 text-center max-w-3xl mx-auto"
         >
           <p className="text-lg text-gray-700 leading-relaxed italic border-l-4 border-primary-600 pl-6">
-            "Every rug is more than a product—it is a piece of heritage. Our values of integrity, craftsmanship, and cultural respect guide us beyond commerce, ensuring that Kalash Heritage remains a showcase of trust and tradition."
+            "Every rug is more than a product—it is a piece of heritage. Our
+            values of integrity, craftsmanship, and cultural respect guide us
+            beyond commerce, ensuring that Kalash Heritage remains a showcase of
+            trust and tradition."
           </p>
         </motion.div>
       </section>
@@ -244,7 +278,9 @@ export default function AboutPage() {
               Authentic Pakistani & Afghani Craftsmanship
             </h2>
             <p className="text-lg text-primary-100 max-w-3xl mx-auto">
-              Rooted in the rich weaving traditions of Pakistan and Afghanistan, our artisans carry forward centuries of expertise—honoring regional techniques while creating timeless pieces for the world.
+              Rooted in the rich weaving traditions of Pakistan and Afghanistan,
+              our artisans carry forward centuries of expertise—honoring
+              regional techniques while creating timeless pieces for the world.
             </p>
           </motion.div>
 
@@ -257,7 +293,7 @@ export default function AboutPage() {
               className="aspect-[4/5] bg-primary-900 rounded-lg overflow-hidden relative"
             >
               <Image
-                src="/data/jora/A  (2).jpeg"
+                src="/data/about-1.jpeg"
                 alt="Artisan handwashing traditional rugs"
                 fill
                 className="object-cover"
@@ -271,7 +307,7 @@ export default function AboutPage() {
               className="aspect-[4/5] bg-primary-900 rounded-lg overflow-hidden relative"
             >
               <Image
-                src="/data/WhatsApp Image 2025-12-26 at 15.28.22.jpeg"
+                src="/data/about-2.jpeg"
                 alt="Handwoven oriental rug"
                 fill
                 className="object-cover"
@@ -285,7 +321,7 @@ export default function AboutPage() {
               className="aspect-[4/5] bg-primary-900 rounded-lg overflow-hidden relative"
             >
               <Image
-                src="/data/process/MANUFACTURING PROCESS/Handweaving process/A  (2).jpeg"
+                src="/data/about-3.jpeg"
                 alt="Traditional weaving techniques"
                 fill
                 className="object-cover"
@@ -307,8 +343,8 @@ export default function AboutPage() {
             Let's Create Something Beautiful Together
           </h2>
           <p className="text-lg text-gray-600 mb-8">
-            Whether you're a collector, dealer, or interior designer, we'd love to
-            discuss how our handmade rugs can enhance your space or business.
+            Whether you're a collector, dealer, or interior designer, we'd love
+            to discuss how our handmade rugs can enhance your space or business.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a
