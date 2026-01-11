@@ -2,9 +2,8 @@ import type { Metadata } from "next";
 import { Inter, Playfair_Display } from "next/font/google";
 import "../styles/globals.css";
 import { Toaster } from "react-hot-toast";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
-import WhatsAppWidget from "@/components/WhatsAppWidget";
+import LayoutWrapper from "@/components/LayoutWrapper";
+import Providers from "@/components/Providers";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const playfair = Playfair_Display({ subsets: ["latin"], variable: "--font-playfair" });
@@ -23,11 +22,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.variable} ${playfair.variable} font-sans`}>
-        <Header />
-        {children}
-        <Footer />
-        <WhatsAppWidget />
-        <Toaster position="top-right" />
+        <Providers>
+          <LayoutWrapper>{children}</LayoutWrapper>
+          <Toaster position="top-right" />
+        </Providers>
       </body>
     </html>
   );

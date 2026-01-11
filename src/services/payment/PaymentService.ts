@@ -1,13 +1,14 @@
 import { PaymentGateway, PaymentIntent, PaymentConfirmation, PaymentRefund } from "@/types";
+import { PayoneerGateway } from "./PayoneerGateway";
 
 /**
  * Payment Service - Abstraction layer for multiple payment gateways
- * Supports: Stripe, PayPal, Safepay
+ * Supports: Stripe, PayPal, Safepay, Payoneer
  */
 export class PaymentService {
   private gateway: PaymentGateway;
 
-  constructor(gatewayName: "stripe" | "paypal" | "safepay") {
+  constructor(gatewayName: "stripe" | "paypal" | "safepay" | "payoneer") {
     this.gateway = this.getGateway(gatewayName);
   }
 
@@ -19,6 +20,8 @@ export class PaymentService {
         return new PayPalGateway();
       case "safepay":
         return new SafepayGateway();
+      case "payoneer":
+        return new PayoneerGateway();
       default:
         throw new Error(`Unsupported payment gateway: ${name}`);
     }

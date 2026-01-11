@@ -3,12 +3,15 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
+import { useSession, signOut } from "next-auth/react";
 import { useCartStore } from "@/store/cartStore";
 import { useCurrencyStore } from "@/store/currencyStore";
 import { CurrencyService } from "@/services/currency/CurrencyService";
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const { data: session } = useSession();
   const cartItemsCount = useCartStore((state) => state.getTotalItems());
   const { currency, setCurrency } = useCurrencyStore();
 
@@ -80,6 +83,105 @@ export default function Header() {
 
           {/* Right icons */}
           <div className="flex items-center gap-4">
+            {/* User Menu */}
+            {session ? (
+              <div className="relative">
+                <button
+                  onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                  className="flex items-center gap-2 text-gray-700 hover:text-gray-900 transition-colors"
+                >
+                  <svg
+                    className="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                    />
+                  </svg>
+                  <span className="hidden md:inline text-sm font-medium">
+                    {session.user.name}
+                  </span>
+                  <svg
+                    className={`w-4 h-4 transition-transform ${isUserMenuOpen ? "rotate-180" : ""}`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 9l-7 7-7-7"
+                    />
+                  </svg>
+                </button>
+
+                {/* Dropdown Menu */}
+                {isUserMenuOpen && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+                    {session.user.role === "admin" && (
+                      <Link
+                        href="/admin"
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        onClick={() => setIsUserMenuOpen(false)}
+                      >
+                        Admin Dashboard
+                      </Link>
+                    )}
+                    <Link
+                      href="/account"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      onClick={() => setIsUserMenuOpen(false)}
+                    >
+                      My Account
+                    </Link>
+                    <Link
+                      href="/account/orders"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      onClick={() => setIsUserMenuOpen(false)}
+                    >
+                      My Orders
+                    </Link>
+                    <hr className="my-2 border-gray-200" />
+                    <button
+                      onClick={() => {
+                        setIsUserMenuOpen(false);
+                        signOut({ callbackUrl: "/" });
+                      }}
+                      className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+                    >
+                      Sign Out
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <Link
+                href="/login"
+                className="hidden md:flex items-center gap-2 text-gray-700 hover:text-gray-900 transition-colors"
+              >
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                  />
+                </svg>
+                <span className="text-sm font-medium">Sign In</span>
+              </Link>
+            )}
+
             <Link
               href="/cart"
               className="relative text-gray-700 hover:text-gray-900 transition-colors"
@@ -167,6 +269,46 @@ export default function Header() {
               >
                 Contact
               </Link>
+
+              {/* Mobile Auth Links */}
+              <hr className="border-gray-200" />
+              {session ? (
+                <>
+                  {session.user.role === "admin" && (
+                    <Link
+                      href="/admin"
+                      className="text-primary-600 hover:text-primary-800 font-medium"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      Admin Dashboard
+                    </Link>
+                  )}
+                  <Link
+                    href="/account"
+                    className="text-gray-700 hover:text-gray-900 font-medium"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    My Account
+                  </Link>
+                  <button
+                    onClick={() => {
+                      setIsMenuOpen(false);
+                      signOut({ callbackUrl: "/" });
+                    }}
+                    className="text-left text-red-600 hover:text-red-800 font-medium"
+                  >
+                    Sign Out
+                  </button>
+                </>
+              ) : (
+                <Link
+                  href="/login"
+                  className="text-primary-600 hover:text-primary-800 font-medium"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Sign In
+                </Link>
+              )}
             </div>
           </nav>
         )}
