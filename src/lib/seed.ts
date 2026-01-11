@@ -55,6 +55,7 @@ export async function seedDatabase() {
         name: "Vintage",
         slug: "vintage",
         description: "Authentic vintage pieces with unique character and timeless appeal",
+        image: "/data/vintage.jpeg",
       },
       {
         name: "Kilims",
