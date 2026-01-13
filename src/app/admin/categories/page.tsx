@@ -12,7 +12,7 @@ async function getCategories() {
       relations: ["products"],
       order: { displayOrder: "ASC" },
     });
-    return categories.map((cat) => ({
+    return categories.map((cat: Category) => ({
       ...cat,
       productCount: cat.products?.length || 0,
     }));
@@ -61,7 +61,7 @@ export default async function CategoriesPage() {
             </thead>
             <tbody className="divide-y divide-gray-200">
               {categories.length > 0 ? (
-                categories.map((category) => (
+                categories.map((category: Category & { productCount: number }) => (
                   <tr key={category.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-4">

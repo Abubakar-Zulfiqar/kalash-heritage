@@ -41,6 +41,7 @@ export interface ShippingRate {
   baseRate: number;
   perKgRate: number;
   estimatedDays: string;
+  currency: string;
 }
 
 export interface ProductFilter {

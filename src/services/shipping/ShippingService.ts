@@ -13,6 +13,7 @@ export class ShippingService {
       baseRate: 500, // PKR
       perKgRate: 100,
       estimatedDays: "2-5 business days",
+      currency: "PKR",
     },
     // Middle East
     {
@@ -21,6 +22,7 @@ export class ShippingService {
       baseRate: 50, // USD
       perKgRate: 15,
       estimatedDays: "5-10 business days",
+      currency: "USD",
     },
     {
       region: "Middle East",
@@ -28,6 +30,7 @@ export class ShippingService {
       baseRate: 50,
       perKgRate: 15,
       estimatedDays: "5-10 business days",
+      currency: "USD",
     },
     // Europe
     {
@@ -36,6 +39,7 @@ export class ShippingService {
       baseRate: 75,
       perKgRate: 20,
       estimatedDays: "7-14 business days",
+      currency: "USD",
     },
     {
       region: "Europe",
@@ -43,6 +47,7 @@ export class ShippingService {
       baseRate: 75,
       perKgRate: 20,
       estimatedDays: "7-14 business days",
+      currency: "USD",
     },
     {
       region: "Europe",
@@ -50,6 +55,7 @@ export class ShippingService {
       baseRate: 75,
       perKgRate: 20,
       estimatedDays: "7-14 business days",
+      currency: "USD",
     },
     // North America
     {
@@ -58,6 +64,7 @@ export class ShippingService {
       baseRate: 100,
       perKgRate: 25,
       estimatedDays: "10-20 business days",
+      currency: "USD",
     },
     {
       region: "North America",
@@ -65,6 +72,7 @@ export class ShippingService {
       baseRate: 100,
       perKgRate: 25,
       estimatedDays: "10-20 business days",
+      currency: "USD",
     },
     // Rest of World (default)
     {
@@ -73,6 +81,7 @@ export class ShippingService {
       baseRate: 150,
       perKgRate: 30,
       estimatedDays: "15-30 business days",
+      currency: "USD",
     },
   ];
 

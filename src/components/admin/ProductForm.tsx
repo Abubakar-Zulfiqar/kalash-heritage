@@ -309,7 +309,7 @@ export default function ProductForm({ categories, initialData }: ProductFormProp
               type="text"
               value={formData.size}
               onChange={(e) => setFormData((prev) => ({ ...prev, size: e.target.value }))}
-              placeholder="e.g., 9'2\" x 5'9\""
+              placeholder={'e.g., 9\'2" x 5\'9"'}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             />
           </div>

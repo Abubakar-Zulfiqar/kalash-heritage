@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getDatabase } from "@/lib/db";
 import { User, UserRole } from "@/entities/User";
 import { Order } from "@/entities/Order";
+import { ShippingAddress } from "@/entities/ShippingAddress";
 import UserRoleForm from "./UserRoleForm";
 
 async function getUser(id: string) {
@@ -47,7 +48,7 @@ export default async function UserDetailPage({
   }
 
   const totalSpent = user.orders?.reduce(
-    (sum, order) => sum + Number(order.total),
+    (sum: number, order: Order) => sum + Number(order.total),
     0
   ) || 0;
 
@@ -129,7 +130,7 @@ export default async function UserDetailPage({
                 </thead>
                 <tbody className="divide-y divide-gray-200">
                   {user.orders && user.orders.length > 0 ? (
-                    user.orders.map((order) => (
+                    user.orders.map((order: Order) => (
                       <tr key={order.id} className="hover:bg-gray-50">
                         <td className="px-6 py-4">
                           <Link
@@ -200,7 +201,7 @@ export default async function UserDetailPage({
                 Saved Addresses
               </h2>
               <div className="space-y-4">
-                {user.addresses.map((address) => (
+                {user.addresses.map((address: ShippingAddress) => (
                   <div
                     key={address.id}
                     className="p-4 bg-gray-50 rounded-lg text-sm text-gray-600"

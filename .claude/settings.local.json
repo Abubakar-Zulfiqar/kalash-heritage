@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "WebSearch",
-      "WebFetch(domain:checkoutdocs.payoneer.com)"
+      "WebFetch(domain:checkoutdocs.payoneer.com)",
+      "Bash(npm run build:*)"
     ]
   }
 }

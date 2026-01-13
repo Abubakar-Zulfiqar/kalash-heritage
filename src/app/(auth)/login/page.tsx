@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { signIn, getSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import toast from "react-hot-toast";
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl");
@@ -150,5 +150,25 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="w-full max-w-md">
+        <div className="bg-white rounded-lg shadow-md p-8 animate-pulse">
+          <div className="h-8 bg-gray-200 rounded w-1/2 mx-auto mb-4"></div>
+          <div className="h-4 bg-gray-200 rounded w-3/4 mx-auto mb-8"></div>
+          <div className="space-y-6">
+            <div className="h-12 bg-gray-200 rounded"></div>
+            <div className="h-12 bg-gray-200 rounded"></div>
+            <div className="h-12 bg-gray-200 rounded"></div>
+          </div>
+        </div>
+      </div>
+    }>
+      <LoginForm />
+    </Suspense>
   );
 }

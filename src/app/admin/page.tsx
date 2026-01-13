@@ -26,7 +26,7 @@ async function getStats() {
     const paidOrders = await orderRepo.find({
       where: { paymentStatus: PaymentStatus.PAID },
     });
-    const totalRevenue = paidOrders.reduce((sum, order) => sum + Number(order.total), 0);
+    const totalRevenue = paidOrders.reduce((sum: number, order: Order) => sum + Number(order.total), 0);
 
     // Get recent orders
     const recentOrders = await orderRepo.find({
@@ -268,7 +268,7 @@ export default async function AdminDashboard() {
             </thead>
             <tbody className="divide-y divide-gray-200">
               {stats.recentOrders.length > 0 ? (
-                stats.recentOrders.map((order) => (
+                stats.recentOrders.map((order: Order) => (
                   <tr key={order.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <Link

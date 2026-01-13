@@ -87,6 +87,10 @@ export default function ShippingForm() {
       const shippingInfo = ShippingService.getShippingInfo(formData.country);
       const shippingCost = ShippingService.calculateShipping(formData.country);
 
+      if (!shippingInfo) {
+        throw new Error("Shipping not available for this country");
+      }
+
       setShippingAddress(formData);
       setShippingOption({
         region: shippingInfo.region,

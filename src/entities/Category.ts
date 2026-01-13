@@ -25,6 +25,9 @@ export class Category {
   @Column({ nullable: true })
   image?: string;
 
+  @Column({ type: "int", default: 0 })
+  displayOrder!: number;
+
   @OneToMany(() => require("./Product").Product, (product: Product) => product.category)
   products!: Product[];
 

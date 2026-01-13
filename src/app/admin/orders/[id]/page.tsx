@@ -3,6 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { getDatabase } from "@/lib/db";
 import { Order, OrderStatus, PaymentStatus } from "@/entities/Order";
+import { OrderItem } from "@/entities/OrderItem";
 import OrderStatusForm from "./OrderStatusForm";
 
 async function getOrder(id: string) {
@@ -120,7 +121,7 @@ export default async function OrderDetailPage({
               <h2 className="text-lg font-semibold text-gray-900">Order Items</h2>
             </div>
             <div className="divide-y divide-gray-200">
-              {order.items?.map((item) => (
+              {order.items?.map((item: OrderItem) => (
                 <div key={item.id} className="p-6 flex gap-4">
                   <div className="relative w-20 h-20 bg-gray-100 rounded overflow-hidden flex-shrink-0">
                     <Image
