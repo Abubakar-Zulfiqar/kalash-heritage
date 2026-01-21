@@ -62,8 +62,8 @@ async function initializeDataSource() {
   const dataSource = new DataSource({
     type: "postgres",
     url: process.env.DATABASE_URL,
-    // DISABLED: Schema is synced. Only enable temporarily if you change entities.
-    synchronize: false,
+    // TEMPORARILY ENABLED: Sync production schema with new collection/category/size columns
+    synchronize: true,
     // Disable verbose query logging - only log errors
     logging: ["error"],
     entities: [User, Product, Collection, Category, Size, Order, OrderItem, Cart, CartItem, ShippingAddress],
