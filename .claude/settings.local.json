@@ -5,7 +5,9 @@
       "WebFetch(domain:checkoutdocs.payoneer.com)",
       "Bash(npm run build:*)",
       "Bash(dir /b \"C:\\\\Code\\\\kalash-heritage\\\\src\")",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(npm install:*)",
+      "Bash(git add:*)"
     ]
   }
 }
