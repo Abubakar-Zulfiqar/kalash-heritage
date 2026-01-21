@@ -55,6 +55,11 @@ export const authOptions: NextAuthOptions = {
           };
         } catch (error) {
           console.error("Auth error:", error);
+          // Log more details for debugging
+          if (error instanceof Error) {
+            console.error("Auth error message:", error.message);
+            console.error("Auth error stack:", error.stack);
+          }
           return null;
         }
       },
