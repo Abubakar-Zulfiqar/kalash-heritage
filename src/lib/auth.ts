@@ -24,7 +24,9 @@ export const authOptions: NextAuthOptions = {
           const db = await getDatabase();
           console.log(`⏱️ Database connection: ${Date.now() - startTime}ms`);
 
-          const userRepo = db.getRepository("User");
+          // Import User entity directly to avoid metadata issues in production
+          const { User: UserEntity } = await import("@/entities/User");
+          const userRepo = db.getRepository(UserEntity);
           const queryStart = Date.now();
           const user = await userRepo.findOne({
             where: { email: credentials.email },
