@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDatabase } from "@/lib/db";
-import { Order } from "@/entities/Order";
 import { PayoneerGateway } from "@/services/payment/PayoneerGateway";
 
 export const dynamic = "force-dynamic";
@@ -14,7 +13,8 @@ export async function POST(request: NextRequest) {
     }
 
     const db = await getDatabase();
-    const orderRepo = db.getRepository(Order);
+    const { Order: OrderEntity } = await import("@/entities/Order");
+    const orderRepo = db.getRepository(OrderEntity);
 
     const order = await orderRepo.findOne({
       where: { id: orderId },

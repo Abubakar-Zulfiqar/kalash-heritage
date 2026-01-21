@@ -6,7 +6,8 @@ import type { Collection } from "@/entities/Collection";
 async function getCollectionsWithCategories() {
   try {
     const db = await getDatabase();
-    const collectionRepo = db.getRepository("Collection");
+    const { Collection: CollectionEntity } = await import("@/entities/Collection");
+    const collectionRepo = db.getRepository(CollectionEntity);
     const collections = await collectionRepo.find({
       where: { hasCategories: true },
       order: { displayOrder: "ASC" },

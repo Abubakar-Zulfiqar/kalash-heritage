@@ -12,7 +12,8 @@ export async function GET() {
     }
 
     const db = await getDatabase();
-    const collectionRepo = db.getRepository("Collection");
+    const { Collection: CollectionEntity } = await import("@/entities/Collection");
+    const collectionRepo = db.getRepository(CollectionEntity);
     const collections = await collectionRepo.find({
       relations: ["categories", "sizes"],
       order: { displayOrder: "ASC" },
@@ -41,7 +42,8 @@ export async function POST(request: NextRequest) {
     }
 
     const db = await getDatabase();
-    const collectionRepo = db.getRepository("Collection");
+    const { Collection: CollectionEntity } = await import("@/entities/Collection");
+    const collectionRepo = db.getRepository(CollectionEntity);
 
     // Check if slug already exists
     const existing = await collectionRepo.findOne({ where: { slug } });

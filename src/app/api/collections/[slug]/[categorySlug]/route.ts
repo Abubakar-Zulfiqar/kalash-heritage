@@ -12,8 +12,10 @@ export async function GET(
   try {
     const { slug, categorySlug } = await params;
     const db = await getDatabase();
-    const collectionRepo = db.getRepository("Collection");
-    const categoryRepo = db.getRepository("Category");
+    const { Collection: CollectionEntity } = await import("@/entities/Collection");
+    const { Category: CategoryEntity } = await import("@/entities/Category");
+    const collectionRepo = db.getRepository(CollectionEntity);
+    const categoryRepo = db.getRepository(CategoryEntity);
 
     // First get the collection
     const collection = await collectionRepo.findOne({

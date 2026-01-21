@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDatabase } from "@/lib/db";
-import { Product } from "@/entities/Product";
+import type { Product } from "@/entities/Product";
 import { IsNull } from "typeorm";
 
 // Force dynamic rendering to prevent build-time database access
@@ -15,7 +15,8 @@ export async function GET(
     const { slug } = await params;
 
     const db = await getDatabase();
-    const productRepository = db.getRepository(Product);
+    const { Product: ProductEntity } = await import("@/entities/Product");
+    const productRepository = db.getRepository(ProductEntity);
 
     const product = await productRepository.findOne({
       where: { slug, deletedAt: IsNull() },

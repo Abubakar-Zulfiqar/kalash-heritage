@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDatabase } from "@/lib/db";
-import { Product } from "@/entities/Product";
+import type { Product } from "@/entities/Product";
 
 // Force dynamic rendering to prevent build-time database access
 export const dynamic = 'force-dynamic';
@@ -30,7 +30,8 @@ export async function GET(request: NextRequest) {
     const sortOrder = (searchParams.get("sortOrder") || "DESC") as "ASC" | "DESC";
 
     const db = await getDatabase();
-    const productRepository = db.getRepository(Product);
+    const { Product: ProductEntity } = await import("@/entities/Product");
+    const productRepository = db.getRepository(ProductEntity);
 
     // Build query with new hierarchy: Product -> Size -> Category/Collection
     const queryBuilder = productRepository

@@ -8,7 +8,8 @@ import { IsNull } from "typeorm";
 async function getProducts() {
   try {
     const db = await getDatabase();
-    const productRepo = db.getRepository("Product");
+    const { Product: ProductEntity } = await import("@/entities/Product");
+    const productRepo = db.getRepository(ProductEntity);
     // Only get non-deleted products (deletedAt is null)
     // TypeORM with @DeleteDateColumn automatically excludes soft-deleted records
     return await productRepo.find({

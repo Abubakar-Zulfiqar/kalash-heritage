@@ -14,7 +14,8 @@ export async function GET() {
     }
 
     const db = await getDatabase();
-    const categoryRepo = db.getRepository("Category");
+    const { Category: CategoryEntity } = await import("@/entities/Category");
+    const categoryRepo = db.getRepository(CategoryEntity);
     const categories = await categoryRepo.find({
       relations: ["collection", "sizes"],
       order: { displayOrder: "ASC" },
@@ -43,8 +44,10 @@ export async function POST(request: NextRequest) {
     }
 
     const db = await getDatabase();
-    const categoryRepo = db.getRepository("Category");
-    const collectionRepo = db.getRepository("Collection");
+    const { Category: CategoryEntity } = await import("@/entities/Category");
+    const { Collection: CollectionEntity } = await import("@/entities/Collection");
+    const categoryRepo = db.getRepository(CategoryEntity);
+    const collectionRepo = db.getRepository(CollectionEntity);
 
     // Check if collection exists and has categories enabled
     const collection = await collectionRepo.findOne({ where: { id: collectionId } });

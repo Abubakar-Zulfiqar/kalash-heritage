@@ -7,7 +7,8 @@ import Link from "next/link";
 async function getCollection(id: string) {
   try {
     const db = await getDatabase();
-    const collectionRepo = db.getRepository("Collection");
+    const { Collection: CollectionEntity } = await import("@/entities/Collection");
+    const collectionRepo = db.getRepository(CollectionEntity);
     const collection = await collectionRepo.findOne({ where: { id } }) as Collection | null;
     return collection ? JSON.parse(JSON.stringify(collection)) : null;
   } catch (error) {

@@ -6,7 +6,8 @@ import { OrderStatus, PaymentStatus } from "@/entities/Order";
 async function getOrders() {
   try {
     const db = await getDatabase();
-    const orderRepo = db.getRepository("Order");
+    const { Order: OrderEntity } = await import("@/entities/Order");
+    const orderRepo = db.getRepository(OrderEntity);
     return await orderRepo.find({
       relations: ["shippingAddress", "items"],
       order: { createdAt: "DESC" },

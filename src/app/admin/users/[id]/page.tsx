@@ -10,7 +10,8 @@ import UserRoleForm from "./UserRoleForm";
 async function getUser(id: string) {
   try {
     const db = await getDatabase();
-    const userRepo = db.getRepository("User");
+    const { User: UserEntity } = await import("@/entities/User");
+    const userRepo = db.getRepository(UserEntity);
     return await userRepo.findOne({
       where: { id },
       relations: ["orders", "orders.shippingAddress", "addresses"],

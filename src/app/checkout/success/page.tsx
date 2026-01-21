@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { getDatabase } from "@/lib/db";
-import { Order } from "@/entities/Order";
 
 async function getOrder(orderId: string) {
   try {
     const db = await getDatabase();
-    const orderRepo = db.getRepository(Order);
+    const { Order: OrderEntity } = await import("@/entities/Order");
+    const orderRepo = db.getRepository(OrderEntity);
     return await orderRepo.findOne({
       where: { id: orderId },
       relations: ["shippingAddress", "items", "items.product"],

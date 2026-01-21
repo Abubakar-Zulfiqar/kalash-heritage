@@ -21,7 +21,8 @@ export async function PUT(
     const data = await request.json();
 
     const db = await getDatabase();
-    const productRepo = db.getRepository("Product");
+    const { Product: ProductEntity } = await import("@/entities/Product");
+    const productRepo = db.getRepository(ProductEntity);
 
     const product = await productRepo.findOne({ where: { id } });
 
@@ -47,7 +48,8 @@ export async function PUT(
 
     // Validate sizeId if provided
     if (data.sizeId) {
-      const sizeRepo = db.getRepository("Size");
+      const { Size: SizeEntity } = await import("@/entities/Size");
+      const sizeRepo = db.getRepository(SizeEntity);
       const size = await sizeRepo.findOne({ where: { id: data.sizeId } });
       if (!size) {
         return NextResponse.json({ error: "Size not found" }, { status: 404 });
@@ -101,7 +103,8 @@ export async function DELETE(
     const { id } = await params;
 
     const db = await getDatabase();
-    const productRepo = db.getRepository("Product");
+    const { Product: ProductEntity } = await import("@/entities/Product");
+    const productRepo = db.getRepository(ProductEntity);
 
     const product = await productRepo.findOne({ where: { id } });
 

@@ -12,7 +12,8 @@ export async function GET(
   try {
     const { slug } = await params;
     const db = await getDatabase();
-    const collectionRepo = db.getRepository("Collection");
+    const { Collection: CollectionEntity } = await import("@/entities/Collection");
+    const collectionRepo = db.getRepository(CollectionEntity);
 
     const collection = await collectionRepo.findOne({
       where: { slug },

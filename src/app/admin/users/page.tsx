@@ -6,7 +6,8 @@ import { UserRole } from "@/entities/User";
 async function getUsers() {
   try {
     const db = await getDatabase();
-    const userRepo = db.getRepository("User");
+    const { User: UserEntity } = await import("@/entities/User");
+    const userRepo = db.getRepository(UserEntity);
     return await userRepo.find({
       order: { createdAt: "DESC" },
       relations: ["orders"],

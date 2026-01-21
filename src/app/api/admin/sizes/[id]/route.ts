@@ -19,7 +19,8 @@ export async function GET(
 
     const { id } = await params;
     const db = await getDatabase();
-    const sizeRepo = db.getRepository("Size");
+    const { Size: SizeEntity } = await import("@/entities/Size");
+    const sizeRepo = db.getRepository(SizeEntity);
     const size = await sizeRepo.findOne({
       where: { id },
       relations: ["collection", "category", "products"],
@@ -52,9 +53,12 @@ export async function PUT(
     const { name, slug, description, image, displayOrder, collectionId, categoryId } = data;
 
     const db = await getDatabase();
-    const sizeRepo = db.getRepository("Size");
-    const collectionRepo = db.getRepository("Collection");
-    const categoryRepo = db.getRepository("Category");
+    const { Size: SizeEntity } = await import("@/entities/Size");
+    const { Collection: CollectionEntity } = await import("@/entities/Collection");
+    const { Category: CategoryEntity } = await import("@/entities/Category");
+    const sizeRepo = db.getRepository(SizeEntity);
+    const collectionRepo = db.getRepository(CollectionEntity);
+    const categoryRepo = db.getRepository(CategoryEntity);
 
     const size = await sizeRepo.findOne({ where: { id } });
     if (!size) {
@@ -133,7 +137,8 @@ export async function DELETE(
 
     const { id } = await params;
     const db = await getDatabase();
-    const sizeRepo = db.getRepository("Size");
+    const { Size: SizeEntity } = await import("@/entities/Size");
+    const sizeRepo = db.getRepository(SizeEntity);
 
     const size = await sizeRepo.findOne({
       where: { id },

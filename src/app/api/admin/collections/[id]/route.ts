@@ -16,7 +16,8 @@ export async function GET(
 
     const { id } = await params;
     const db = await getDatabase();
-    const collectionRepo = db.getRepository("Collection");
+    const { Collection: CollectionEntity } = await import("@/entities/Collection");
+    const collectionRepo = db.getRepository(CollectionEntity);
     const collection = await collectionRepo.findOne({
       where: { id },
       relations: ["categories", "sizes"],
@@ -49,7 +50,8 @@ export async function PUT(
     const { name, slug, description, image, displayOrder, hasCategories } = data;
 
     const db = await getDatabase();
-    const collectionRepo = db.getRepository("Collection");
+    const { Collection: CollectionEntity } = await import("@/entities/Collection");
+    const collectionRepo = db.getRepository(CollectionEntity);
 
     const collection = await collectionRepo.findOne({ where: { id } });
     if (!collection) {
@@ -94,7 +96,8 @@ export async function DELETE(
 
     const { id } = await params;
     const db = await getDatabase();
-    const collectionRepo = db.getRepository("Collection");
+    const { Collection: CollectionEntity } = await import("@/entities/Collection");
+    const collectionRepo = db.getRepository(CollectionEntity);
 
     const collection = await collectionRepo.findOne({
       where: { id },

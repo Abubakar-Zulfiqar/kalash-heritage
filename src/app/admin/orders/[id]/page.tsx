@@ -10,7 +10,8 @@ import OrderStatusForm from "./OrderStatusForm";
 async function getOrder(id: string) {
   try {
     const db = await getDatabase();
-    const orderRepo = db.getRepository("Order");
+    const { Order: OrderEntity } = await import("@/entities/Order");
+    const orderRepo = db.getRepository(OrderEntity);
     return await orderRepo.findOne({
       where: { id },
       relations: ["shippingAddress", "items", "items.product", "user"],

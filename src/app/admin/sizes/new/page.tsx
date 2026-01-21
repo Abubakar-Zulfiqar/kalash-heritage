@@ -7,7 +7,8 @@ import type { Category } from "@/entities/Category";
 async function getCollections() {
   try {
     const db = await getDatabase();
-    const collectionRepo = db.getRepository("Collection");
+    const { Collection: CollectionEntity } = await import("@/entities/Collection");
+    const collectionRepo = db.getRepository(CollectionEntity);
     const collections = await collectionRepo.find({
       order: { displayOrder: "ASC" },
     }) as Collection[];
@@ -22,7 +23,8 @@ async function getCollections() {
 async function getCategories() {
   try {
     const db = await getDatabase();
-    const categoryRepo = db.getRepository("Category");
+    const { Category: CategoryEntity } = await import("@/entities/Category");
+    const categoryRepo = db.getRepository(CategoryEntity);
     const categories = await categoryRepo.find({
       relations: ["collection"],
       order: { displayOrder: "ASC" },

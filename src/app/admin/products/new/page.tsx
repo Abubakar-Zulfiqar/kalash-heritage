@@ -8,7 +8,8 @@ import Link from "next/link";
 async function getCollections() {
   try {
     const db = await getDatabase();
-    const collectionRepo = db.getRepository("Collection");
+    const { Collection: CollectionEntity } = await import("@/entities/Collection");
+    const collectionRepo = db.getRepository(CollectionEntity);
     const collections = await collectionRepo.find({ order: { displayOrder: "ASC" } }) as Collection[];
     return JSON.parse(JSON.stringify(collections));
   } catch (error) {
@@ -20,7 +21,8 @@ async function getCollections() {
 async function getCategories() {
   try {
     const db = await getDatabase();
-    const categoryRepo = db.getRepository("Category");
+    const { Category: CategoryEntity } = await import("@/entities/Category");
+    const categoryRepo = db.getRepository(CategoryEntity);
     const categories = await categoryRepo.find({ relations: ["collection"], order: { displayOrder: "ASC" } }) as Category[];
     return JSON.parse(JSON.stringify(categories));
   } catch (error) {
@@ -32,7 +34,8 @@ async function getCategories() {
 async function getSizes() {
   try {
     const db = await getDatabase();
-    const sizeRepo = db.getRepository("Size");
+    const { Size: SizeEntity } = await import("@/entities/Size");
+    const sizeRepo = db.getRepository(SizeEntity);
     const sizes = await sizeRepo.find({ relations: ["collection", "category"], order: { displayOrder: "ASC" } }) as Size[];
     return JSON.parse(JSON.stringify(sizes));
   } catch (error) {

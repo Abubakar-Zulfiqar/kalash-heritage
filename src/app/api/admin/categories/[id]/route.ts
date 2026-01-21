@@ -19,7 +19,8 @@ export async function GET(
 
     const { id } = await params;
     const db = await getDatabase();
-    const categoryRepo = db.getRepository("Category");
+    const { Category: CategoryEntity } = await import("@/entities/Category");
+    const categoryRepo = db.getRepository(CategoryEntity);
     const category = await categoryRepo.findOne({
       where: { id },
       relations: ["collection", "sizes"],
@@ -52,7 +53,9 @@ export async function PUT(
     const { name, slug, description, image, displayOrder, collectionId } = data;
 
     const db = await getDatabase();
-    const categoryRepo = db.getRepository("Category");
+    const { Category: CategoryEntity } = await import("@/entities/Category");
+    const { Collection: CollectionEntity } = await import("@/entities/Collection");
+    const categoryRepo = db.getRepository(CategoryEntity);
 
     const category = await categoryRepo.findOne({ where: { id } });
     if (!category) {
@@ -61,7 +64,7 @@ export async function PUT(
 
     // If changing collection, verify the new collection supports categories
     if (collectionId && collectionId !== category.collectionId) {
-      const collectionRepo = db.getRepository("Collection");
+      const collectionRepo = db.getRepository(CollectionEntity);
       const collection = await collectionRepo.findOne({ where: { id: collectionId } });
       if (!collection) {
         return NextResponse.json({ error: "Collection not found" }, { status: 404 });
@@ -112,7 +115,8 @@ export async function DELETE(
 
     const { id } = await params;
     const db = await getDatabase();
-    const categoryRepo = db.getRepository("Category");
+    const { Category: CategoryEntity } = await import("@/entities/Category");
+    const categoryRepo = db.getRepository(CategoryEntity);
 
     const category = await categoryRepo.findOne({
       where: { id },

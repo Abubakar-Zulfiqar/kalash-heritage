@@ -7,11 +7,16 @@ async function getStats() {
   try {
     const db = await getDatabase();
 
-    // Use string-based repository access to avoid entity class mismatch issues
-    const productRepo = db.getRepository("Product");
-    const orderRepo = db.getRepository("Order");
-    const userRepo = db.getRepository("User");
-    const categoryRepo = db.getRepository("Category");
+    // Import entities directly to avoid metadata issues in production
+    const { Product: ProductEntity } = await import("@/entities/Product");
+    const { Order: OrderEntity } = await import("@/entities/Order");
+    const { User: UserEntity } = await import("@/entities/User");
+    const { Category: CategoryEntity } = await import("@/entities/Category");
+
+    const productRepo = db.getRepository(ProductEntity);
+    const orderRepo = db.getRepository(OrderEntity);
+    const userRepo = db.getRepository(UserEntity);
+    const categoryRepo = db.getRepository(CategoryEntity);
 
     // Run ALL queries in parallel for maximum performance
     const [

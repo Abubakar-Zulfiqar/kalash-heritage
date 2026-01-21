@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { getDatabase } from "@/lib/db";
-import { Category } from "@/entities/Category";
 
 // Force dynamic rendering to prevent build-time database access
 export const dynamic = 'force-dynamic';
@@ -9,7 +8,8 @@ export const runtime = 'nodejs';
 export async function GET() {
   try {
     const db = await getDatabase();
-    const categoryRepository = db.getRepository(Category);
+    const { Category: CategoryEntity } = await import("@/entities/Category");
+    const categoryRepository = db.getRepository(CategoryEntity);
 
     const categories = await categoryRepository.find({
       order: { name: "ASC" },

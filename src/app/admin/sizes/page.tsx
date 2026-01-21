@@ -7,7 +7,8 @@ import DeleteSizeButton from "./DeleteSizeButton";
 async function getSizes() {
   try {
     const db = await getDatabase();
-    const sizeRepo = db.getRepository("Size");
+    const { Size: SizeEntity } = await import("@/entities/Size");
+    const sizeRepo = db.getRepository(SizeEntity);
     const sizes = await sizeRepo.find({
       relations: ["collection", "category", "category.collection", "products"],
       order: { displayOrder: "ASC" },

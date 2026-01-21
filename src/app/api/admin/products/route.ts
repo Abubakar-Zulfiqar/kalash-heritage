@@ -16,7 +16,8 @@ export async function POST(request: NextRequest) {
     const data = await request.json();
 
     const db = await getDatabase();
-    const productRepo = db.getRepository("Product");
+    const { Product: ProductEntity } = await import("@/entities/Product");
+    const productRepo = db.getRepository(ProductEntity);
 
     // Check for duplicate slug or SKU
     const existingSlug = await productRepo.findOne({ where: { slug: data.slug } });
@@ -31,7 +32,8 @@ export async function POST(request: NextRequest) {
 
     // Validate sizeId if provided
     if (data.sizeId) {
-      const sizeRepo = db.getRepository("Size");
+      const { Size: SizeEntity } = await import("@/entities/Size");
+      const sizeRepo = db.getRepository(SizeEntity);
       const size = await sizeRepo.findOne({ where: { id: data.sizeId } });
       if (!size) {
         return NextResponse.json({ error: "Size not found" }, { status: 404 });

@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getDatabase } from "@/lib/db";
-import { Order } from "@/entities/Order";
 
 export const dynamic = "force-dynamic";
 
@@ -21,7 +20,8 @@ export async function PUT(
     const data = await request.json();
 
     const db = await getDatabase();
-    const orderRepo = db.getRepository(Order);
+    const { Order: OrderEntity } = await import("@/entities/Order");
+    const orderRepo = db.getRepository(OrderEntity);
 
     const order = await orderRepo.findOne({ where: { id } });
 

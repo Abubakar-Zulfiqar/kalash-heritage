@@ -8,7 +8,8 @@ export const runtime = 'nodejs';
 export async function GET() {
   try {
     const db = await getDatabase();
-    const collectionRepo = db.getRepository("Collection");
+    const { Collection: CollectionEntity } = await import("@/entities/Collection");
+    const collectionRepo = db.getRepository(CollectionEntity);
 
     const collections = await collectionRepo.find({
       relations: ["categories", "sizes"],

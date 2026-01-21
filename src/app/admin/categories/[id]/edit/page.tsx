@@ -8,7 +8,8 @@ import Link from "next/link";
 async function getCategory(id: string) {
   try {
     const db = await getDatabase();
-    const categoryRepo = db.getRepository("Category");
+    const { Category: CategoryEntity } = await import("@/entities/Category");
+    const categoryRepo = db.getRepository(CategoryEntity);
     const category = await categoryRepo.findOne({
       where: { id },
       relations: ["collection"],
@@ -23,7 +24,8 @@ async function getCategory(id: string) {
 async function getCollectionsWithCategories() {
   try {
     const db = await getDatabase();
-    const collectionRepo = db.getRepository("Collection");
+    const { Collection: CollectionEntity } = await import("@/entities/Collection");
+    const collectionRepo = db.getRepository(CollectionEntity);
     const collections = await collectionRepo.find({
       where: { hasCategories: true },
       order: { displayOrder: "ASC" },

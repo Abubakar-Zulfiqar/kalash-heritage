@@ -8,7 +8,8 @@ import DeleteCategoryButton from "./DeleteCategoryButton";
 async function getCategories() {
   try {
     const db = await getDatabase();
-    const categoryRepo = db.getRepository("Category");
+    const { Category: CategoryEntity } = await import("@/entities/Category");
+    const categoryRepo = db.getRepository(CategoryEntity);
     const categories = await categoryRepo.find({
       relations: ["collection", "sizes"],
       order: { displayOrder: "ASC" },
@@ -26,7 +27,8 @@ async function getCategories() {
 async function getCollectionsWithCategories() {
   try {
     const db = await getDatabase();
-    const collectionRepo = db.getRepository("Collection");
+    const { Collection: CollectionEntity } = await import("@/entities/Collection");
+    const collectionRepo = db.getRepository(CollectionEntity);
     return await collectionRepo.find({
       where: { hasCategories: true },
       order: { displayOrder: "ASC" },

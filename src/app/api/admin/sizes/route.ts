@@ -14,7 +14,8 @@ export async function GET() {
     }
 
     const db = await getDatabase();
-    const sizeRepo = db.getRepository("Size");
+    const { Size: SizeEntity } = await import("@/entities/Size");
+    const sizeRepo = db.getRepository(SizeEntity);
     const sizes = await sizeRepo.find({
       relations: ["collection", "category", "products"],
       order: { displayOrder: "ASC" },
@@ -47,9 +48,12 @@ export async function POST(request: NextRequest) {
     }
 
     const db = await getDatabase();
-    const sizeRepo = db.getRepository("Size");
-    const collectionRepo = db.getRepository("Collection");
-    const categoryRepo = db.getRepository("Category");
+    const { Size: SizeEntity } = await import("@/entities/Size");
+    const { Collection: CollectionEntity } = await import("@/entities/Collection");
+    const { Category: CategoryEntity } = await import("@/entities/Category");
+    const sizeRepo = db.getRepository(SizeEntity);
+    const collectionRepo = db.getRepository(CollectionEntity);
+    const categoryRepo = db.getRepository(CategoryEntity);
 
     // If categoryId is provided, validate it and get its collection
     if (categoryId) {

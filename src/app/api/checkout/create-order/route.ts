@@ -1,16 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDatabase } from "@/lib/db";
-import { Order, OrderStatus, PaymentStatus } from "@/entities/Order";
-import { OrderItem } from "@/entities/OrderItem";
-import { ShippingAddress } from "@/entities/ShippingAddress";
-import { Product } from "@/entities/Product";
-import { User, UserRole } from "@/entities/User";
+import { OrderStatus, PaymentStatus } from "@/entities/Order";
+import { UserRole } from "@/entities/User";
 import bcrypt from "bcryptjs";
 
 export const dynamic = "force-dynamic";
 
-async function generateOrderNumber(db: any): Promise<string> {
-  const orderRepo = db.getRepository(Order);
+async function generateOrderNumber(db: any, OrderEntity: any): Promise<string> {
+  const orderRepo = db.getRepository(OrderEntity);
   const year = new Date().getFullYear();
 
   // Get the count of orders this year
@@ -44,11 +41,17 @@ export async function POST(request: NextRequest) {
     }
 
     const db = await getDatabase();
-    const orderRepo = db.getRepository(Order);
-    const orderItemRepo = db.getRepository(OrderItem);
-    const addressRepo = db.getRepository(ShippingAddress);
-    const productRepo = db.getRepository(Product);
-    const userRepo = db.getRepository(User);
+    const { Order: OrderEntity } = await import("@/entities/Order");
+    const { OrderItem: OrderItemEntity } = await import("@/entities/OrderItem");
+    const { ShippingAddress: ShippingAddressEntity } = await import("@/entities/ShippingAddress");
+    const { Product: ProductEntity } = await import("@/entities/Product");
+    const { User: UserEntity } = await import("@/entities/User");
+
+    const orderRepo = db.getRepository(OrderEntity);
+    const orderItemRepo = db.getRepository(OrderItemEntity);
+    const addressRepo = db.getRepository(ShippingAddressEntity);
+    const productRepo = db.getRepository(ProductEntity);
+    const userRepo = db.getRepository(UserEntity);
 
     // Calculate subtotal and verify products exist
     let subtotal = 0;
@@ -69,7 +72,7 @@ export async function POST(request: NextRequest) {
     const total = subtotal + shippingCost;
 
     // Generate order number
-    const orderNumber = await generateOrderNumber(db);
+    const orderNumber = await generateOrderNumber(db, OrderEntity);
 
     // Create user if requested
     let userId = null;
