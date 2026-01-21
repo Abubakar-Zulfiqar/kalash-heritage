@@ -5,8 +5,19 @@ import Link from "next/link";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 
+interface Collection {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string;
+  image?: string;
+  hasCategories: boolean;
+}
+
 export default function HomePage() {
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [collections, setCollections] = useState<Collection[]>([]);
+  const [collectionsLoading, setCollectionsLoading] = useState(true);
 
   const bannerImages = [
     "/data/banner-1.jpeg",
@@ -22,6 +33,20 @@ export default function HomePage() {
 
     return () => clearInterval(timer);
   }, [bannerImages.length]);
+
+  // Fetch collections for featured section
+  useEffect(() => {
+    fetch("/api/collections")
+      .then((res) => res.json())
+      .then((data) => {
+        setCollections(data.slice(0, 3)); // Show up to 3 collections
+        setCollectionsLoading(false);
+      })
+      .catch((error) => {
+        console.error("Error fetching collections:", error);
+        setCollectionsLoading(false);
+      });
+  }, []);
 
   return (
     <main className="min-h-screen bg-white">
@@ -89,11 +114,10 @@ export default function HomePage() {
             <button
               key={index}
               onClick={() => setCurrentSlide(index)}
-              className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                currentSlide === index
+              className={`w-3 h-3 rounded-full transition-all duration-300 ${currentSlide === index
                   ? "bg-white w-8"
                   : "bg-white/50 hover:bg-white/75"
-              }`}
+                }`}
               aria-label={`Go to slide ${index + 1}`}
             />
           ))}
@@ -101,7 +125,7 @@ export default function HomePage() {
       </section>
 
       {/* Heritage Timeline */}
-      <section className="py-20 bg-gray-50">
+      {/* <section className="py-20 bg-gray-50">
         <div className="container mx-auto px-4">
           <motion.div
             initial={{ opacity: 0 }}
@@ -165,7 +189,7 @@ export default function HomePage() {
             ))}
           </div>
         </div>
-      </section>
+      </section> */}
 
       {/* Featured Collections */}
       <section className="py-20 container mx-auto px-4">
@@ -185,57 +209,65 @@ export default function HomePage() {
         </motion.div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {[
-            {
-              title: "Oriental Classics",
-              description:
-                "Traditional designs from centuries of craftsmanship",
-            },
-            {
-              title: "Modern Collection",
-              description: "Contemporary patterns for modern spaces",
-            },
-            {
-              title: "Vintage Kilims",
-              description: "Authentic vintage pieces with unique character",
-            },
-          ].map((collection, index) => (
-            <motion.div
-              key={collection.title}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: index * 0.2 }}
-              className="group cursor-pointer"
-            >
-              <div className="aspect-[4/5] bg-gray-200 mb-4 overflow-hidden">
-                <div className="w-full h-full bg-gradient-to-br from-primary-200 to-primary-400 group-hover:scale-105 transition-transform duration-500" />
+          {collectionsLoading ? (
+            // Loading skeleton
+            [...Array(3)].map((_, i) => (
+              <div key={i} className="animate-pulse">
+                <div className="aspect-[4/5] bg-gray-200 mb-4 rounded-lg"></div>
+                <div className="h-6 bg-gray-200 w-3/4 mb-2 rounded"></div>
+                <div className="h-4 bg-gray-200 w-full mb-4 rounded"></div>
+                <div className="h-4 bg-gray-200 w-1/3 rounded"></div>
               </div>
-              <h3 className="text-2xl font-serif font-semibold text-gray-900 mb-2">
-                {collection.title}
-              </h3>
-              <p className="text-gray-600 mb-4">{collection.description}</p>
-              <Link
-                href="/shop"
-                className="text-primary-600 hover:text-primary-800 font-medium inline-flex items-center gap-2"
+            ))
+          ) : (
+            collections.map((collection, index) => (
+              <motion.div
+                key={collection.id}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.2 }}
+                className="group cursor-pointer"
               >
-                View Collection
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 5l7 7-7 7"
-                  />
-                </svg>
-              </Link>
-            </motion.div>
-          ))}
+                <Link href={`/collections/${collection.slug}`}>
+                  <div className="aspect-[4/5] bg-gray-200 mb-4 overflow-hidden rounded-lg relative">
+                    {collection.image ? (
+                      <Image
+                        src={collection.image}
+                        alt={collection.name}
+                        fill
+                        className="object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-primary-200 to-primary-400 group-hover:scale-105 transition-transform duration-500" />
+                    )}
+                  </div>
+                  <h3 className="text-2xl font-serif font-semibold text-gray-900 mb-2 group-hover:text-primary-600 transition-colors">
+                    {collection.name}
+                  </h3>
+                  <p className="text-gray-600 mb-4">
+                    {collection.description || `Explore our ${collection.name.toLowerCase()} collection`}
+                  </p>
+                  <span className="text-primary-600 hover:text-primary-800 font-medium inline-flex items-center gap-2">
+                    View Collection
+                    <svg
+                      className="w-4 h-4 group-hover:translate-x-1 transition-transform"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 5l7 7-7 7"
+                      />
+                    </svg>
+                  </span>
+                </Link>
+              </motion.div>
+            ))
+          )}
         </div>
       </section>
 

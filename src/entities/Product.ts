@@ -4,10 +4,11 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
+  DeleteDateColumn,
   ManyToOne,
   JoinColumn,
 } from "typeorm";
-import type { Category } from "./Category";
+import type { Size } from "./Size";
 
 @Entity("products")
 export class Product {
@@ -37,9 +38,6 @@ export class Product {
 
   // Product specifications
   @Column({ nullable: true })
-  size?: string; // e.g., "9'2\" x 5'9\""
-
-  @Column({ nullable: true })
   dimensions?: string; // e.g., "280cm x 175cm"
 
   @Column({ nullable: true })
@@ -56,9 +54,6 @@ export class Product {
 
   @Column({ nullable: true })
   origin?: string; // e.g., "Pakistan", "Afghanistan"
-
-  @Column({ nullable: true })
-  collection?: string; // e.g., "Heritage Collection"
 
   @Column({ nullable: true })
   pattern?: string; // e.g., "Floral", "Geometric"
@@ -86,18 +81,23 @@ export class Product {
   @Column({ type: "text", nullable: true })
   metaDescription?: string;
 
-  @ManyToOne(() => require("./Category").Category, (category: Category) => category.products, {
+  // Relationship to Size
+  @ManyToOne(() => require("./Size").Size, (size: Size) => size.products, {
     onDelete: "SET NULL",
   })
-  @JoinColumn({ name: "categoryId" })
-  category!: Category;
+  @JoinColumn({ name: "sizeId" })
+  size?: Size;
 
   @Column({ nullable: true })
-  categoryId?: string;
+  sizeId?: string;
 
   @CreateDateColumn()
   createdAt!: Date;
 
   @UpdateDateColumn()
   updatedAt!: Date;
+
+  // Soft delete support
+  @DeleteDateColumn()
+  deletedAt?: Date;
 }

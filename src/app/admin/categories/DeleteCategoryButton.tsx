@@ -7,23 +7,24 @@ import toast from "react-hot-toast";
 interface DeleteCategoryButtonProps {
   categoryId: string;
   categoryName: string;
-  productCount: number;
+  sizeCount: number;
 }
 
 export default function DeleteCategoryButton({
   categoryId,
   categoryName,
-  productCount,
+  sizeCount,
 }: DeleteCategoryButtonProps) {
   const router = useRouter();
   const [isDeleting, setIsDeleting] = useState(false);
 
   const handleDelete = async () => {
-    const message = productCount > 0
-      ? `This category has ${productCount} products. Deleting it will remove the category from these products. Are you sure?`
-      : `Are you sure you want to delete "${categoryName}"? This action cannot be undone.`;
+    if (sizeCount > 0) {
+      toast.error("Cannot delete category with sizes. Please delete the sizes first.");
+      return;
+    }
 
-    if (!confirm(message)) {
+    if (!confirm(`Are you sure you want to delete "${categoryName}"?`)) {
       return;
     }
 
@@ -35,13 +36,14 @@ export default function DeleteCategoryButton({
       });
 
       if (!response.ok) {
-        throw new Error("Failed to delete category");
+        const data = await response.json();
+        throw new Error(data.error || "Failed to delete category");
       }
 
       toast.success("Category deleted successfully");
       router.refresh();
-    } catch {
-      toast.error("Failed to delete category");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to delete category");
     } finally {
       setIsDeleting(false);
     }
@@ -51,7 +53,12 @@ export default function DeleteCategoryButton({
     <button
       onClick={handleDelete}
       disabled={isDeleting}
-      className="px-3 py-1 text-sm text-red-600 hover:text-red-800 font-medium disabled:opacity-50"
+      className={`px-3 py-1 text-sm font-medium ${
+        sizeCount > 0
+          ? "text-gray-400 cursor-not-allowed"
+          : "text-red-600 hover:text-red-800"
+      }`}
+      title={sizeCount > 0 ? "Delete sizes first" : "Delete category"}
     >
       {isDeleting ? "Deleting..." : "Delete"}
     </button>

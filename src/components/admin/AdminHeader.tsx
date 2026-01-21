@@ -10,6 +10,12 @@ interface AdminHeaderProps {
 }
 
 export default function AdminHeader({ user }: AdminHeaderProps) {
+  const handleSignOut = () => {
+    // Use current origin to ensure redirect stays on the same domain
+    const callbackUrl = typeof window !== "undefined" ? window.location.origin : "/";
+    signOut({ callbackUrl });
+  };
+
   return (
     <header className="sticky top-0 z-30 bg-white border-b border-gray-200 px-6 py-4">
       <div className="flex items-center justify-between">
@@ -24,7 +30,7 @@ export default function AdminHeader({ user }: AdminHeaderProps) {
           </div>
 
           <button
-            onClick={() => signOut({ callbackUrl: "/" })}
+            onClick={handleSignOut}
             className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
           >
             Sign Out

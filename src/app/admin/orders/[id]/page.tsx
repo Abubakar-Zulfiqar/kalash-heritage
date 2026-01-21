@@ -2,14 +2,15 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { getDatabase } from "@/lib/db";
-import { Order, OrderStatus, PaymentStatus } from "@/entities/Order";
-import { OrderItem } from "@/entities/OrderItem";
+import type { Order } from "@/entities/Order";
+import { OrderStatus, PaymentStatus } from "@/entities/Order";
+import type { OrderItem } from "@/entities/OrderItem";
 import OrderStatusForm from "./OrderStatusForm";
 
 async function getOrder(id: string) {
   try {
     const db = await getDatabase();
-    const orderRepo = db.getRepository(Order);
+    const orderRepo = db.getRepository("Order");
     return await orderRepo.findOne({
       where: { id },
       relations: ["shippingAddress", "items", "items.product", "user"],

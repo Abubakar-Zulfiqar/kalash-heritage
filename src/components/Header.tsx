@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { useCartStore } from "@/store/cartStore";
 import { useCurrencyStore } from "@/store/currencyStore";
@@ -11,9 +11,21 @@ import { CurrencyService } from "@/services/currency/CurrencyService";
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const { data: session } = useSession();
   const cartItemsCount = useCartStore((state) => state.getTotalItems());
   const { currency, setCurrency } = useCurrencyStore();
+
+  // Prevent hydration mismatch by only showing cart count after mount
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const handleSignOut = () => {
+    // Use current origin to ensure redirect stays on the same domain
+    const callbackUrl = typeof window !== "undefined" ? window.location.origin : "/";
+    signOut({ callbackUrl });
+  };
 
   const currencies = CurrencyService.getSupportedCurrencies();
 
@@ -151,7 +163,7 @@ export default function Header() {
                     <button
                       onClick={() => {
                         setIsUserMenuOpen(false);
-                        signOut({ callbackUrl: "/" });
+                        handleSignOut();
                       }}
                       className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
                     >
@@ -199,7 +211,7 @@ export default function Header() {
                   d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
                 />
               </svg>
-              {cartItemsCount > 0 && (
+              {mounted && cartItemsCount > 0 && (
                 <span className="absolute -top-2 -right-2 bg-accent-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
                   {cartItemsCount}
                 </span>
@@ -293,7 +305,7 @@ export default function Header() {
                   <button
                     onClick={() => {
                       setIsMenuOpen(false);
-                      signOut({ callbackUrl: "/" });
+                      handleSignOut();
                     }}
                     className="text-left text-red-600 hover:text-red-800 font-medium"
                   >

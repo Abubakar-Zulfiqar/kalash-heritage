@@ -1,6 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
+import Link from "next/link";
 import ProductCard from "@/components/ProductCard";
 import { motion } from "framer-motion";
 
@@ -15,48 +17,54 @@ interface Product {
   material?: string;
   color?: string;
   style?: string;
-  category?: {
-    id: string;
-    name: string;
-    slug: string;
-  };
 }
 
-interface Category {
+interface Collection {
   id: string;
   name: string;
   slug: string;
 }
 
-export default function ShopPage() {
+function ShopContent() {
+  const searchParams = useSearchParams();
   const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [collections, setCollections] = useState<Collection[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
+  // Read URL params
+  const collectionFromUrl = searchParams.get("collection") || "";
+  const categoryFromUrl = searchParams.get("category") || "";
+  const sizeFromUrl = searchParams.get("size") || "";
+
   // Filters
-  const [selectedCategory, setSelectedCategory] = useState("");
+  const [selectedCollection, setSelectedCollection] = useState(collectionFromUrl);
   const [selectedColor, setSelectedColor] = useState("");
   const [selectedStyle, setSelectedStyle] = useState("");
   const [sortBy, setSortBy] = useState("createdAt");
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
 
-  // Fetch categories
+  // Sync URL params to state
   useEffect(() => {
-    fetch("/api/categories")
+    setSelectedCollection(collectionFromUrl);
+  }, [collectionFromUrl]);
+
+  // Fetch collections for filter
+  useEffect(() => {
+    fetch("/api/collections")
       .then((res) => res.json())
       .then((data) => {
         if (Array.isArray(data)) {
-          setCategories(data);
+          setCollections(data);
         } else {
-          setCategories([]);
+          setCollections([]);
         }
       })
       .catch((error) => {
-        console.error("Error fetching categories:", error);
-        setCategories([]);
+        console.error("Error fetching collections:", error);
+        setCollections([]);
       });
   }, []);
 
@@ -71,7 +79,9 @@ export default function ShopPage() {
       sortOrder: "DESC",
     });
 
-    if (selectedCategory) params.append("category", selectedCategory);
+    if (selectedCollection) params.append("collection", selectedCollection);
+    if (categoryFromUrl) params.append("category", categoryFromUrl);
+    if (sizeFromUrl) params.append("size", sizeFromUrl);
     if (selectedColor) params.append("color", selectedColor);
     if (selectedStyle) params.append("style", selectedStyle);
     if (minPrice) params.append("minPrice", minPrice);
@@ -95,23 +105,67 @@ export default function ShopPage() {
         setTotalPages(1);
         setLoading(false);
       });
-  }, [page, selectedCategory, selectedColor, selectedStyle, sortBy, minPrice, maxPrice]);
+  }, [page, selectedCollection, categoryFromUrl, sizeFromUrl, selectedColor, selectedStyle, sortBy, minPrice, maxPrice]);
 
   const colors = ["Red", "Blue", "Grey", "Burgundy", "Navy", "Teal", "Black", "Multi"];
   const styles = ["Oriental", "Modern", "Vintage", "Persian"];
 
   const resetFilters = () => {
-    setSelectedCategory("");
+    setSelectedCollection("");
     setSelectedColor("");
     setSelectedStyle("");
     setMinPrice("");
     setMaxPrice("");
     setPage(1);
+    // Clear URL params by navigating to /shop
+    window.history.pushState({}, "", "/shop");
   };
+
+  // Get active filter context for breadcrumb display
+  const getFilterContext = () => {
+    const parts: { label: string; href: string }[] = [{ label: "Shop", href: "/shop" }];
+
+    if (collectionFromUrl) {
+      const collection = collections.find(c => c.slug === collectionFromUrl);
+      if (collection) {
+        parts.push({ label: collection.name, href: `/collections/${collection.slug}` });
+      }
+    }
+    if (categoryFromUrl) {
+      parts.push({ label: categoryFromUrl.replace(/-/g, " "), href: "#" });
+    }
+    if (sizeFromUrl) {
+      parts.push({ label: sizeFromUrl.replace(/-/g, " "), href: "#" });
+    }
+
+    return parts;
+  };
+
+  const filterContext = getFilterContext();
 
   return (
     <div className="min-h-screen bg-white">
       <div className="container mx-auto px-4 py-12">
+        {/* Breadcrumb Context */}
+        {filterContext.length > 1 && (
+          <nav className="mb-6">
+            <ol className="flex items-center gap-2 text-sm text-gray-600">
+              {filterContext.map((item, index) => (
+                <li key={index} className="flex items-center gap-2">
+                  {index > 0 && <span className="text-gray-400">/</span>}
+                  {index === filterContext.length - 1 ? (
+                    <span className="text-gray-900 font-medium capitalize">{item.label}</span>
+                  ) : (
+                    <Link href={item.href} className="hover:text-primary-600 capitalize">
+                      {item.label}
+                    </Link>
+                  )}
+                </li>
+              ))}
+            </ol>
+          </nav>
+        )}
+
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -119,7 +173,9 @@ export default function ShopPage() {
           className="text-center mb-12"
         >
           <h1 className="text-5xl font-serif font-bold text-gray-900 mb-4">
-            Our Collection
+            {collectionFromUrl
+              ? collections.find(c => c.slug === collectionFromUrl)?.name || "Shop"
+              : "Our Collection"}
           </h1>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
             Explore our curated selection of handmade rugs, each piece a testament to centuries of craftsmanship.
@@ -140,38 +196,38 @@ export default function ShopPage() {
                 </button>
               </div>
 
-              {/* Category Filter */}
+              {/* Collection Filter */}
               <div className="mb-6">
-                <h3 className="font-semibold text-gray-900 mb-3">Category</h3>
+                <h3 className="font-semibold text-gray-900 mb-3">Collection</h3>
                 <div className="space-y-2">
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input
                       type="radio"
-                      name="category"
+                      name="collection"
                       value=""
-                      checked={selectedCategory === ""}
+                      checked={selectedCollection === ""}
                       onChange={(e) => {
-                        setSelectedCategory(e.target.value);
+                        setSelectedCollection(e.target.value);
                         setPage(1);
                       }}
                       className="w-4 h-4"
                     />
                     <span className="text-sm text-gray-700">All</span>
                   </label>
-                  {categories.map((cat) => (
-                    <label key={cat.id} className="flex items-center gap-2 cursor-pointer">
+                  {collections.map((col) => (
+                    <label key={col.id} className="flex items-center gap-2 cursor-pointer">
                       <input
                         type="radio"
-                        name="category"
-                        value={cat.slug}
-                        checked={selectedCategory === cat.slug}
+                        name="collection"
+                        value={col.slug}
+                        checked={selectedCollection === col.slug}
                         onChange={(e) => {
-                          setSelectedCategory(e.target.value);
+                          setSelectedCollection(e.target.value);
                           setPage(1);
                         }}
                         className="w-4 h-4"
                       />
-                      <span className="text-sm text-gray-700">{cat.name}</span>
+                      <span className="text-sm text-gray-700">{col.name}</span>
                     </label>
                   ))}
                 </div>
@@ -369,5 +425,17 @@ export default function ShopPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ShopPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+      </div>
+    }>
+      <ShopContent />
+    </Suspense>
   );
 }

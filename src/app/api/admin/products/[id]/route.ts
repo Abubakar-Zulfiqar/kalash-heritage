@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getDatabase } from "@/lib/db";
-import { Product } from "@/entities/Product";
 import { Not } from "typeorm";
 
 export const dynamic = "force-dynamic";
@@ -22,7 +21,7 @@ export async function PUT(
     const data = await request.json();
 
     const db = await getDatabase();
-    const productRepo = db.getRepository(Product);
+    const productRepo = db.getRepository("Product");
 
     const product = await productRepo.findOne({ where: { id } });
 
@@ -46,6 +45,15 @@ export async function PUT(
       return NextResponse.json({ error: "A product with this SKU already exists" }, { status: 400 });
     }
 
+    // Validate sizeId if provided
+    if (data.sizeId) {
+      const sizeRepo = db.getRepository("Size");
+      const size = await sizeRepo.findOne({ where: { id: data.sizeId } });
+      if (!size) {
+        return NextResponse.json({ error: "Size not found" }, { status: 404 });
+      }
+    }
+
     // Update product
     await productRepo.update(id, {
       name: data.name,
@@ -54,14 +62,12 @@ export async function PUT(
       description: data.description,
       price: data.price,
       salePrice: data.salePrice || null,
-      categoryId: data.categoryId || null,
-      size: data.size || null,
+      sizeId: data.sizeId || null,
       dimensions: data.dimensions || null,
       material: data.material || null,
       color: data.color || null,
       style: data.style || null,
       origin: data.origin || null,
-      collection: data.collection || null,
       pattern: data.pattern || null,
       stock: data.stock,
       inStock: data.inStock,
@@ -95,7 +101,7 @@ export async function DELETE(
     const { id } = await params;
 
     const db = await getDatabase();
-    const productRepo = db.getRepository(Product);
+    const productRepo = db.getRepository("Product");
 
     const product = await productRepo.findOne({ where: { id } });
 
@@ -103,7 +109,8 @@ export async function DELETE(
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
     }
 
-    await productRepo.delete(id);
+    // Soft delete the product
+    await productRepo.softDelete(id);
 
     return NextResponse.json({ success: true });
   } catch (error) {

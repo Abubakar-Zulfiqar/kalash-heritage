@@ -88,8 +88,16 @@ Client-side stores in `src/store/`:
 
 NextAuth with Credentials provider in `src/lib/auth.ts`:
 - Login page: `/login`
-- Admin routes protected by middleware (`src/middleware.ts`)
+- Admin routes protected via `getServerSession()` check in each API handler
 - Admin user: `admin@kalashheritage.com` / `admin123`
+
+Admin route protection pattern:
+```typescript
+const session = await getServerSession(authOptions);
+if (!session || session.user.role !== "admin") {
+  return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+}
+```
 
 ## Database
 
@@ -108,14 +116,20 @@ npm run seed
 ## API Routes
 
 ```
-/api/products              GET (list with filters), POST
-/api/products/[slug]       GET, PUT, DELETE
-/api/categories            GET
-/api/auth/[...nextauth]    NextAuth handlers
-/api/checkout/create-order POST (create order)
-/api/payoneer/create-session POST (payment session)
-/api/payoneer/webhook      POST (payment callbacks)
-/api/admin/*               Admin CRUD routes (protected)
+/api/products                  GET (list with filters), POST
+/api/products/[slug]           GET, PUT, DELETE
+/api/categories                GET
+/api/auth/[...nextauth]        NextAuth handlers
+/api/checkout/create-order     POST (create order)
+/api/payoneer/create-session   POST (payment session)
+/api/payoneer/webhook          POST (payment callbacks)
+/api/seed                      GET (seed database - dev only)
+/api/admin/products            POST (create)
+/api/admin/products/[id]       GET, PUT, DELETE
+/api/admin/categories          POST (create)
+/api/admin/categories/[id]     GET, PUT, DELETE
+/api/admin/orders/[id]         GET, PUT
+/api/admin/users/[id]          GET, PUT
 ```
 
 ## Admin Dashboard

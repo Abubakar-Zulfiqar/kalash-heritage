@@ -18,21 +18,34 @@ interface Product {
   price: number;
   salePrice?: number;
   images: string[];
-  size?: string;
   dimensions?: string;
   material?: string;
   color?: string;
   colors?: string[];
   style?: string;
   origin?: string;
-  collection?: string;
   pattern?: string;
   stock: number;
   sku: string;
-  category?: {
+  size?: {
     id: string;
     name: string;
     slug: string;
+    category?: {
+      id: string;
+      name: string;
+      slug: string;
+      collection?: {
+        id: string;
+        name: string;
+        slug: string;
+      };
+    };
+    collection?: {
+      id: string;
+      name: string;
+      slug: string;
+    };
   };
 }
 
@@ -116,28 +129,48 @@ export default function ProductDetailPage() {
     <div className="min-h-screen bg-white">
       <div className="container mx-auto px-4 py-12">
         {/* Breadcrumb */}
-        <div className="flex items-center gap-2 text-sm text-gray-600 mb-8">
+        <nav className="flex items-center gap-2 text-sm text-gray-600 mb-8">
           <Link href="/" className="hover:text-gray-900">
             Home
           </Link>
           <span>/</span>
-          <Link href="/shop" className="hover:text-gray-900">
-            Shop
+          <Link href="/collections" className="hover:text-gray-900">
+            Collections
           </Link>
-          {product.category && (
+          {/* Collection (either from size.category.collection or size.collection) */}
+          {(product.size?.category?.collection || product.size?.collection) && (
             <>
               <span>/</span>
               <Link
-                href={`/shop?category=${product.category.slug}`}
+                href={`/collections/${(product.size?.category?.collection || product.size?.collection)?.slug}`}
                 className="hover:text-gray-900"
               >
-                {product.category.name}
+                {(product.size?.category?.collection || product.size?.collection)?.name}
               </Link>
             </>
           )}
+          {/* Category (if exists) */}
+          {product.size?.category && (
+            <>
+              <span>/</span>
+              <Link
+                href={`/collections/${product.size.category.collection?.slug}/${product.size.category.slug}`}
+                className="hover:text-gray-900"
+              >
+                {product.size.category.name}
+              </Link>
+            </>
+          )}
+          {/* Size */}
+          {product.size && (
+            <>
+              <span>/</span>
+              <span className="text-gray-700">{product.size.name}</span>
+            </>
+          )}
           <span>/</span>
-          <span className="text-gray-900">{product.name}</span>
-        </div>
+          <span className="text-gray-900 font-medium">{product.name}</span>
+        </nav>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           {/* Image Gallery */}
@@ -188,9 +221,10 @@ export default function ProductDetailPage() {
 
           {/* Product Info */}
           <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
-            {product.collection && (
+            {/* Show collection name */}
+            {(product.size?.category?.collection || product.size?.collection) && (
               <p className="text-sm text-primary-600 font-semibold mb-2">
-                {product.collection}
+                {(product.size?.category?.collection || product.size?.collection)?.name}
               </p>
             )}
 
@@ -236,7 +270,7 @@ export default function ProductDetailPage() {
                 {product.size && (
                   <div>
                     <span className="text-gray-600">Size:</span>
-                    <span className="ml-2 font-medium text-gray-900">{product.size}</span>
+                    <span className="ml-2 font-medium text-gray-900">{product.size.name}</span>
                   </div>
                 )}
                 {product.dimensions && (

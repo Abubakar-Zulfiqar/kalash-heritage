@@ -1,45 +1,54 @@
 import Link from "next/link";
 import StatsCard from "@/components/admin/StatsCard";
 import { getDatabase } from "@/lib/db";
-import { Product } from "@/entities/Product";
 import { Order, OrderStatus, PaymentStatus } from "@/entities/Order";
-import { User } from "@/entities/User";
-import { Category } from "@/entities/Category";
 
 async function getStats() {
   try {
     const db = await getDatabase();
 
-    const productRepo = db.getRepository(Product);
-    const orderRepo = db.getRepository(Order);
-    const userRepo = db.getRepository(User);
-    const categoryRepo = db.getRepository(Category);
+    // Use string-based repository access to avoid entity class mismatch issues
+    const productRepo = db.getRepository("Product");
+    const orderRepo = db.getRepository("Order");
+    const userRepo = db.getRepository("User");
+    const categoryRepo = db.getRepository("Category");
 
-    const [totalProducts, totalOrders, totalUsers, totalCategories] = await Promise.all([
+    // Run ALL queries in parallel for maximum performance
+    const [
+      totalProducts,
+      totalOrders,
+      totalUsers,
+      totalCategories,
+      paidOrders,
+      recentOrders,
+      pendingOrders,
+      processingOrders,
+      shippedOrders,
+      deliveredOrders,
+    ] = await Promise.all([
       productRepo.count(),
       orderRepo.count(),
       userRepo.count(),
       categoryRepo.count(),
+      // Get revenue from paid orders - only select total field for efficiency
+      orderRepo.find({
+        where: { paymentStatus: PaymentStatus.PAID },
+        select: ["total"],
+      }),
+      // Get recent orders
+      orderRepo.find({
+        order: { createdAt: "DESC" },
+        take: 5,
+        relations: ["shippingAddress"],
+      }),
+      // Get orders by status counts
+      orderRepo.count({ where: { status: OrderStatus.PENDING } }),
+      orderRepo.count({ where: { status: OrderStatus.PROCESSING } }),
+      orderRepo.count({ where: { status: OrderStatus.SHIPPED } }),
+      orderRepo.count({ where: { status: OrderStatus.DELIVERED } }),
     ]);
 
-    // Get revenue from paid orders
-    const paidOrders = await orderRepo.find({
-      where: { paymentStatus: PaymentStatus.PAID },
-    });
     const totalRevenue = paidOrders.reduce((sum: number, order: Order) => sum + Number(order.total), 0);
-
-    // Get recent orders
-    const recentOrders = await orderRepo.find({
-      order: { createdAt: "DESC" },
-      take: 5,
-      relations: ["shippingAddress"],
-    });
-
-    // Get orders by status
-    const pendingOrders = await orderRepo.count({ where: { status: OrderStatus.PENDING } });
-    const processingOrders = await orderRepo.count({ where: { status: OrderStatus.PROCESSING } });
-    const shippedOrders = await orderRepo.count({ where: { status: OrderStatus.SHIPPED } });
-    const deliveredOrders = await orderRepo.count({ where: { status: OrderStatus.DELIVERED } });
 
     return {
       totalProducts,

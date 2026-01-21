@@ -15,10 +15,12 @@ function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState("Signing in...");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setLoadingMessage("Authenticating...");
 
     try {
       const result = await signIn("credentials", {
@@ -30,23 +32,30 @@ function LoginForm() {
       if (result?.error) {
         toast.error("Invalid email or password");
         setIsLoading(false);
+        setLoadingMessage("Signing in...");
       } else {
-        toast.success("Signed in successfully");
+        setLoadingMessage("Getting your account...");
 
-        // Get session to check user role
+        // Get session to determine redirect based on user role
         const session = await getSession();
 
-        // Redirect admin users to admin dashboard, others to callbackUrl or home
-        if (session?.user?.role === "admin") {
-          router.push(callbackUrl || "/admin");
+        setLoadingMessage("Redirecting...");
+        toast.success("Signed in successfully!");
+
+        // Redirect: use callbackUrl if provided, otherwise admin users go to /admin, others to home
+        if (callbackUrl) {
+          router.push(callbackUrl);
+        } else if (session?.user?.role === "admin") {
+          router.push("/admin");
         } else {
-          router.push(callbackUrl || "/");
+          router.push("/");
         }
         router.refresh();
       }
     } catch {
       toast.error("An error occurred. Please try again.");
       setIsLoading(false);
+      setLoadingMessage("Signing in...");
     }
   };
 
@@ -132,7 +141,7 @@ function LoginForm() {
                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                   />
                 </svg>
-                Signing in...
+                {loadingMessage}
               </span>
             ) : (
               "Sign In"

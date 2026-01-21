@@ -1,31 +1,59 @@
 import { notFound } from "next/navigation";
 import ProductForm from "@/components/admin/ProductForm";
 import { getDatabase } from "@/lib/db";
-import { Product } from "@/entities/Product";
-import { Category } from "@/entities/Category";
+import type { Product } from "@/entities/Product";
+import type { Collection } from "@/entities/Collection";
+import type { Category } from "@/entities/Category";
+import type { Size } from "@/entities/Size";
 import Link from "next/link";
 
 async function getProduct(id: string) {
   try {
     const db = await getDatabase();
-    const productRepo = db.getRepository(Product);
-    return await productRepo.findOne({
+    const productRepo = db.getRepository("Product");
+    const product = await productRepo.findOne({
       where: { id },
-      relations: ["category"],
-    });
+      relations: ["size", "size.collection", "size.category"],
+    }) as Product | null;
+    return product ? JSON.parse(JSON.stringify(product)) : null;
   } catch (error) {
     console.error("Error fetching product:", error);
     return null;
   }
 }
 
+async function getCollections() {
+  try {
+    const db = await getDatabase();
+    const collectionRepo = db.getRepository("Collection");
+    const collections = await collectionRepo.find({ order: { displayOrder: "ASC" } }) as Collection[];
+    return JSON.parse(JSON.stringify(collections));
+  } catch (error) {
+    console.error("Error fetching collections:", error);
+    return [];
+  }
+}
+
 async function getCategories() {
   try {
     const db = await getDatabase();
-    const categoryRepo = db.getRepository(Category);
-    return await categoryRepo.find({ order: { name: "ASC" } });
+    const categoryRepo = db.getRepository("Category");
+    const categories = await categoryRepo.find({ relations: ["collection"], order: { displayOrder: "ASC" } }) as Category[];
+    return JSON.parse(JSON.stringify(categories));
   } catch (error) {
     console.error("Error fetching categories:", error);
+    return [];
+  }
+}
+
+async function getSizes() {
+  try {
+    const db = await getDatabase();
+    const sizeRepo = db.getRepository("Size");
+    const sizes = await sizeRepo.find({ relations: ["collection", "category"], order: { displayOrder: "ASC" } }) as Size[];
+    return JSON.parse(JSON.stringify(sizes));
+  } catch (error) {
+    console.error("Error fetching sizes:", error);
     return [];
   }
 }
@@ -36,9 +64,11 @@ export default async function EditProductPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [product, categories] = await Promise.all([
+  const [product, collections, categories, sizes] = await Promise.all([
     getProduct(id),
+    getCollections(),
     getCategories(),
+    getSizes(),
   ]);
 
   if (!product) {
@@ -59,7 +89,9 @@ export default async function EditProductPage({
       </div>
 
       <ProductForm
+        collections={collections}
         categories={categories}
+        sizes={sizes}
         initialData={{
           id: product.id,
           name: product.name,
@@ -68,14 +100,12 @@ export default async function EditProductPage({
           description: product.description,
           price: Number(product.price),
           salePrice: product.salePrice ? Number(product.salePrice) : undefined,
-          categoryId: product.categoryId || undefined,
-          size: product.size || undefined,
+          sizeId: product.sizeId || undefined,
           dimensions: product.dimensions || undefined,
           material: product.material || undefined,
           color: product.color || undefined,
           style: product.style || undefined,
           origin: product.origin || undefined,
-          collection: product.collection || undefined,
           pattern: product.pattern || undefined,
           stock: product.stock,
           inStock: product.inStock,

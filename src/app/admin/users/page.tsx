@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { getDatabase } from "@/lib/db";
-import { User, UserRole } from "@/entities/User";
+import type { User } from "@/entities/User";
+import { UserRole } from "@/entities/User";
 
 async function getUsers() {
   try {
     const db = await getDatabase();
-    const userRepo = db.getRepository(User);
+    const userRepo = db.getRepository("User");
     return await userRepo.find({
       order: { createdAt: "DESC" },
       relations: ["orders"],

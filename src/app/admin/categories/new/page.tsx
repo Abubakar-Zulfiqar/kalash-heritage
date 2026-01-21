@@ -1,7 +1,26 @@
 import CategoryForm from "@/components/admin/CategoryForm";
 import Link from "next/link";
+import { getDatabase } from "@/lib/db";
+import type { Collection } from "@/entities/Collection";
 
-export default function NewCategoryPage() {
+async function getCollectionsWithCategories() {
+  try {
+    const db = await getDatabase();
+    const collectionRepo = db.getRepository("Collection");
+    const collections = await collectionRepo.find({
+      where: { hasCategories: true },
+      order: { displayOrder: "ASC" },
+    }) as Collection[];
+    return JSON.parse(JSON.stringify(collections));
+  } catch (error) {
+    console.error("Error fetching collections:", error);
+    return [];
+  }
+}
+
+export default async function NewCategoryPage() {
+  const collections = await getCollectionsWithCategories();
+
   return (
     <div className="space-y-6">
       <div>
@@ -15,7 +34,19 @@ export default function NewCategoryPage() {
         <h1 className="text-2xl font-bold text-gray-900">Add New Category</h1>
       </div>
 
-      <CategoryForm />
+      {collections.length === 0 ? (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+          <p className="text-yellow-800">
+            No collections with categories enabled.{" "}
+            <Link href="/admin/collections/new" className="text-yellow-900 underline">
+              Create a collection
+            </Link>{" "}
+            and enable &quot;Has Categories&quot; first.
+          </p>
+        </div>
+      ) : (
+        <CategoryForm collections={collections} />
+      )}
     </div>
   );
 }

@@ -12,10 +12,11 @@ export default function LayoutWrapper({
 }) {
   const pathname = usePathname();
 
-  // Don't show main site header/footer on admin pages
+  // Don't show main site header/footer on admin or auth pages
   const isAdminRoute = pathname?.startsWith("/admin");
+  const isAuthRoute = pathname === "/login" || pathname === "/register" || pathname === "/forgot-password";
 
-  if (isAdminRoute) {
+  if (isAdminRoute || isAuthRoute) {
     return <>{children}</>;
   }
 

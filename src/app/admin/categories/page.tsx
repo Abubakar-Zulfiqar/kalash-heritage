@@ -1,20 +1,21 @@
 import Link from "next/link";
 import Image from "next/image";
 import { getDatabase } from "@/lib/db";
-import { Category } from "@/entities/Category";
+import type { Category } from "@/entities/Category";
+import type { Collection } from "@/entities/Collection";
 import DeleteCategoryButton from "./DeleteCategoryButton";
 
 async function getCategories() {
   try {
     const db = await getDatabase();
-    const categoryRepo = db.getRepository(Category);
+    const categoryRepo = db.getRepository("Category");
     const categories = await categoryRepo.find({
-      relations: ["products"],
+      relations: ["collection", "sizes"],
       order: { displayOrder: "ASC" },
     });
     return categories.map((cat: Category) => ({
       ...cat,
-      productCount: cat.products?.length || 0,
+      sizeCount: cat.sizes?.length || 0,
     }));
   } catch (error) {
     console.error("Error fetching categories:", error);
@@ -22,23 +23,60 @@ async function getCategories() {
   }
 }
 
+async function getCollectionsWithCategories() {
+  try {
+    const db = await getDatabase();
+    const collectionRepo = db.getRepository("Collection");
+    return await collectionRepo.find({
+      where: { hasCategories: true },
+      order: { displayOrder: "ASC" },
+    }) as Collection[];
+  } catch (error) {
+    console.error("Error fetching collections:", error);
+    return [];
+  }
+}
+
 export default async function CategoriesPage() {
-  const categories = await getCategories();
+  const [categories, collections] = await Promise.all([
+    getCategories(),
+    getCollectionsWithCategories(),
+  ]);
+
+  const hasCollectionsWithCategories = collections.length > 0;
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Categories</h1>
-          <p className="text-gray-600 mt-1">Manage product categories</p>
+          <p className="text-gray-600 mt-1">Manage categories within collections (e.g., Overdyes, White Wash)</p>
         </div>
-        <Link
-          href="/admin/categories/new"
-          className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium"
-        >
-          Add Category
-        </Link>
+        {hasCollectionsWithCategories ? (
+          <Link
+            href="/admin/categories/new"
+            className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium"
+          >
+            Add Category
+          </Link>
+        ) : (
+          <span className="text-sm text-gray-500">
+            Create a collection with categories first
+          </span>
+        )}
       </div>
+
+      {!hasCollectionsWithCategories && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+          <p className="text-yellow-800">
+            No collections with categories enabled yet.
+            <Link href="/admin/collections/new" className="ml-1 text-yellow-900 underline">
+              Create a collection
+            </Link>
+            {" "}and enable &quot;Has Categories&quot; to add categories.
+          </p>
+        </div>
+      )}
 
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
@@ -49,7 +87,10 @@ export default async function CategoriesPage() {
                   Category
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Products
+                  Collection
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Sizes
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Order
@@ -61,7 +102,7 @@ export default async function CategoriesPage() {
             </thead>
             <tbody className="divide-y divide-gray-200">
               {categories.length > 0 ? (
-                categories.map((category: Category & { productCount: number }) => (
+                categories.map((category: Category & { sizeCount: number }) => (
                   <tr key={category.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-4">
@@ -87,8 +128,13 @@ export default async function CategoriesPage() {
                         </div>
                       </div>
                     </td>
+                    <td className="px-6 py-4">
+                      <span className="px-2 py-1 text-xs font-medium rounded-full bg-purple-100 text-purple-800">
+                        {category.collection?.name || "Unknown"}
+                      </span>
+                    </td>
                     <td className="px-6 py-4 text-gray-600">
-                      {category.productCount} products
+                      {category.sizeCount} sizes
                     </td>
                     <td className="px-6 py-4 text-gray-600">
                       {category.displayOrder}
@@ -104,7 +150,7 @@ export default async function CategoriesPage() {
                         <DeleteCategoryButton
                           categoryId={category.id}
                           categoryName={category.name}
-                          productCount={category.productCount}
+                          sizeCount={category.sizeCount}
                         />
                       </div>
                     </td>
@@ -112,11 +158,13 @@ export default async function CategoriesPage() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={4} className="px-6 py-12 text-center text-gray-500">
+                  <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
                     No categories yet.{" "}
-                    <Link href="/admin/categories/new" className="text-primary-600 hover:underline">
-                      Add your first category
-                    </Link>
+                    {hasCollectionsWithCategories && (
+                      <Link href="/admin/categories/new" className="text-primary-600 hover:underline">
+                        Add your first category
+                      </Link>
+                    )}
                   </td>
                 </tr>
               )}

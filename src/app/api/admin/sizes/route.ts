@@ -1,0 +1,105 @@
+import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { getDatabase } from "@/lib/db";
+
+export const dynamic = "force-dynamic";
+
+// GET all sizes
+export async function GET() {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session || session.user.role !== "admin") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const db = await getDatabase();
+    const sizeRepo = db.getRepository("Size");
+    const sizes = await sizeRepo.find({
+      relations: ["collection", "category", "products"],
+      order: { displayOrder: "ASC" },
+    });
+
+    return NextResponse.json(sizes);
+  } catch (error) {
+    console.error("Error fetching sizes:", error);
+    return NextResponse.json({ error: "Failed to fetch sizes" }, { status: 500 });
+  }
+}
+
+// POST create new size
+export async function POST(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session || session.user.role !== "admin") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const data = await request.json();
+    const { name, slug, description, image, displayOrder, collectionId, categoryId } = data;
+
+    if (!name || !slug) {
+      return NextResponse.json({ error: "Name and slug are required" }, { status: 400 });
+    }
+
+    if (!collectionId && !categoryId) {
+      return NextResponse.json({ error: "Either collection or category is required" }, { status: 400 });
+    }
+
+    const db = await getDatabase();
+    const sizeRepo = db.getRepository("Size");
+    const collectionRepo = db.getRepository("Collection");
+    const categoryRepo = db.getRepository("Category");
+
+    // If categoryId is provided, validate it and get its collection
+    if (categoryId) {
+      const category = await categoryRepo.findOne({
+        where: { id: categoryId },
+        relations: ["collection"],
+      });
+      if (!category) {
+        return NextResponse.json({ error: "Category not found" }, { status: 404 });
+      }
+      // Check for duplicate slug within the same category
+      const existingSlug = await sizeRepo.findOne({
+        where: { slug, categoryId },
+      });
+      if (existingSlug) {
+        return NextResponse.json({ error: "A size with this slug already exists in this category" }, { status: 400 });
+      }
+    } else if (collectionId) {
+      // Validate collection exists and doesn't have categories
+      const collection = await collectionRepo.findOne({ where: { id: collectionId } });
+      if (!collection) {
+        return NextResponse.json({ error: "Collection not found" }, { status: 404 });
+      }
+      if (collection.hasCategories) {
+        return NextResponse.json({ error: "This collection has categories. Please select a category instead." }, { status: 400 });
+      }
+      // Check for duplicate slug within the same collection
+      const existingSlug = await sizeRepo.findOne({
+        where: { slug, collectionId, categoryId: null as unknown as undefined },
+      });
+      if (existingSlug) {
+        return NextResponse.json({ error: "A size with this slug already exists in this collection" }, { status: 400 });
+      }
+    }
+
+    const size = sizeRepo.create({
+      name,
+      slug,
+      description: description || null,
+      image: image || null,
+      displayOrder: displayOrder || 0,
+      collectionId: categoryId ? null : collectionId,
+      categoryId: categoryId || null,
+    });
+
+    const savedSize = await sizeRepo.save(size);
+
+    return NextResponse.json(savedSize, { status: 201 });
+  } catch (error) {
+    console.error("Error creating size:", error);
+    return NextResponse.json({ error: "Failed to create size" }, { status: 500 });
+  }
+}

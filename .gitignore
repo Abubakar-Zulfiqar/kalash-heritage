@@ -36,3 +36,7 @@ next-env.d.ts
 # database
 *.db
 *.sqlite
+
+# uploads (keep folder but ignore uploaded files)
+/public/uploads/*
+!/public/uploads/.gitkeep

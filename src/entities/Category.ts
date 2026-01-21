@@ -5,18 +5,21 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   OneToMany,
+  ManyToOne,
+  JoinColumn,
 } from "typeorm";
-import type { Product } from "./Product";
+import type { Collection } from "./Collection";
+import type { Size } from "./Size";
 
 @Entity("categories")
 export class Category {
   @PrimaryGeneratedColumn("uuid")
   id!: string;
 
-  @Column({ unique: true })
+  @Column()
   name!: string;
 
-  @Column({ unique: true })
+  @Column()
   slug!: string;
 
   @Column({ type: "text", nullable: true })
@@ -28,8 +31,20 @@ export class Category {
   @Column({ type: "int", default: 0 })
   displayOrder!: number;
 
-  @OneToMany(() => require("./Product").Product, (product: Product) => product.category)
-  products!: Product[];
+  // Parent collection
+  @ManyToOne(() => require("./Collection").Collection, (collection: Collection) => collection.categories, {
+    onDelete: "CASCADE",
+  })
+  @JoinColumn({ name: "collectionId" })
+  collection!: Collection;
+
+  // Made nullable temporarily for migration - existing categories will need to be assigned to a collection
+  @Column({ nullable: true })
+  collectionId?: string;
+
+  // Sizes under this category
+  @OneToMany(() => require("./Size").Size, (size: Size) => size.category)
+  sizes!: Size[];
 
   @CreateDateColumn()
   createdAt!: Date;

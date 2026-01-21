@@ -9,26 +9,50 @@ interface Category {
   id: string;
   name: string;
   slug: string;
+}
+
+interface Size {
+  id: string;
+  name: string;
+  slug: string;
+}
+
+interface Collection {
+  id: string;
+  name: string;
+  slug: string;
   description?: string;
   image?: string;
+  hasCategories: boolean;
+  categories?: Category[];
+  sizes?: Size[];
 }
 
 export default function CollectionsPage() {
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [collections, setCollections] = useState<Collection[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/categories")
+    fetch("/api/collections")
       .then((res) => res.json())
       .then((data) => {
-        setCategories(data);
+        setCollections(data);
         setLoading(false);
       })
       .catch((error) => {
-        console.error("Error fetching categories:", error);
+        console.error("Error fetching collections:", error);
         setLoading(false);
       });
   }, []);
+
+  const getItemCount = (collection: Collection) => {
+    if (collection.hasCategories && collection.categories) {
+      return `${collection.categories.length} categories`;
+    } else if (collection.sizes) {
+      return `${collection.sizes.length} sizes`;
+    }
+    return "";
+  };
 
   return (
     <div className="min-h-screen bg-white">
@@ -41,15 +65,9 @@ export default function CollectionsPage() {
             transition={{ duration: 0.6 }}
             className="text-center"
           >
-            <p className="text-sm md:text-base tracking-[0.3em] uppercase mb-4 text-primary-600 font-semibold">
+            <h3 className="text-3xl tracking-[0.3em] uppercase mb-4 text-primary-600 font-semibold">
               Heritage Exhibition
-            </p>
-            <h1 className="font-serif text-5xl md:text-6xl font-bold text-gray-900 mb-6">
-              Cultural Artifacts by Region
-            </h1>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-              Each collection represents a distinct cultural heritage—from the intricate traditions of Persian weaving to the bold geometric patterns of Afghani kilims. These are not merely decorative pieces, but historical artifacts preserving centuries of craftsmanship.
-            </p>
+            </h3>
           </motion.div>
         </div>
       </section>
@@ -69,22 +87,22 @@ export default function CollectionsPage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {categories.map((category, index) => (
+              {collections.map((collection, index) => (
                 <motion.div
-                  key={category.id}
+                  key={collection.id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5, delay: index * 0.1 }}
                 >
                   <Link
-                    href={`/shop?category=${category.slug}`}
+                    href={`/collections/${collection.slug}`}
                     className="group block overflow-hidden rounded-lg shadow-md hover:shadow-xl transition-all duration-300"
                   >
                     <div className="relative aspect-[4/3] bg-gradient-to-br from-primary-100 to-primary-50 overflow-hidden">
-                      {category.image ? (
+                      {collection.image ? (
                         <Image
-                          src={category.image}
-                          alt={category.name}
+                          src={collection.image}
+                          alt={collection.name}
                           fill
                           className="object-cover group-hover:scale-110 transition-transform duration-500"
                         />
@@ -109,11 +127,14 @@ export default function CollectionsPage() {
                     </div>
                     <div className="p-6 bg-white">
                       <h3 className="font-serif text-2xl font-semibold text-gray-900 mb-2 group-hover:text-primary-600 transition-colors">
-                        {category.name}
+                        {collection.name}
                       </h3>
-                      <p className="text-gray-600 line-clamp-2">
-                        {category.description || `Explore our ${category.name.toLowerCase()} collection`}
+                      <p className="text-gray-600 line-clamp-2 mb-2">
+                        {collection.description || `Explore our ${collection.name.toLowerCase()} collection`}
                       </p>
+                      {getItemCount(collection) && (
+                        <p className="text-sm text-gray-500 mb-2">{getItemCount(collection)}</p>
+                      )}
                       <div className="mt-4 flex items-center text-primary-600 font-medium">
                         <span>View Collection</span>
                         <svg
@@ -137,7 +158,7 @@ export default function CollectionsPage() {
             </div>
           )}
 
-          {!loading && categories.length === 0 && (
+          {!loading && collections.length === 0 && (
             <div className="text-center py-20">
               <p className="text-gray-500 text-xl">No collections available at the moment.</p>
             </div>
@@ -197,7 +218,7 @@ export default function CollectionsPage() {
               Interested in Learning More?
             </h2>
             <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-              Whether you're a collector, interior designer, or simply appreciate cultural heritage, we welcome inquiries about our pieces, their history, and the artisans behind them.
+              Whether you&apos;re a collector, interior designer, or simply appreciate cultural heritage, we welcome inquiries about our pieces, their history, and the artisans behind them.
             </p>
             <div className="flex gap-4 justify-center flex-wrap">
               <Link

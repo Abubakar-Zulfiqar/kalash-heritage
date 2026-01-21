@@ -2,7 +2,8 @@ import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { getDatabase } from "@/lib/db";
-import { User, UserRole } from "@/entities/User";
+import type { User } from "@/entities/User";
+import { UserRole } from "@/entities/User";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -18,20 +19,29 @@ export const authOptions: NextAuthOptions = {
         }
 
         try {
+          const startTime = Date.now();
+
           const db = await getDatabase();
-          const userRepo = db.getRepository(User);
+          console.log(`⏱️ Database connection: ${Date.now() - startTime}ms`);
+
+          const userRepo = db.getRepository("User");
+          const queryStart = Date.now();
           const user = await userRepo.findOne({
             where: { email: credentials.email },
-          });
+          }) as User | null;
+          console.log(`⏱️ User query: ${Date.now() - queryStart}ms`);
 
           if (!user) {
             return null;
           }
 
+          const bcryptStart = Date.now();
           const isValidPassword = await bcrypt.compare(
             credentials.password,
             user.password
           );
+          console.log(`⏱️ Bcrypt compare: ${Date.now() - bcryptStart}ms`);
+          console.log(`⏱️ Total auth time: ${Date.now() - startTime}ms`);
 
           if (!isValidPassword) {
             return null;

@@ -1,15 +1,19 @@
 import Link from "next/link";
 import Image from "next/image";
 import { getDatabase } from "@/lib/db";
-import { Product } from "@/entities/Product";
+import type { Product } from "@/entities/Product";
 import DeleteProductButton from "./DeleteProductButton";
+import { IsNull } from "typeorm";
 
 async function getProducts() {
   try {
     const db = await getDatabase();
-    const productRepo = db.getRepository(Product);
+    const productRepo = db.getRepository("Product");
+    // Only get non-deleted products (deletedAt is null)
+    // TypeORM with @DeleteDateColumn automatically excludes soft-deleted records
     return await productRepo.find({
-      relations: ["category"],
+      where: { deletedAt: IsNull() },
+      relations: ["size", "size.collection", "size.category", "size.category.collection"],
       order: { createdAt: "DESC" },
     });
   } catch (error) {
@@ -23,6 +27,24 @@ function formatCurrency(amount: number): string {
     style: "currency",
     currency: "USD",
   }).format(amount);
+}
+
+function getProductHierarchy(product: Product): { collection?: string; category?: string; size?: string } {
+  if (product.size) {
+    if (product.size.category) {
+      return {
+        collection: product.size.category.collection?.name,
+        category: product.size.category.name,
+        size: product.size.name,
+      };
+    } else if (product.size.collection) {
+      return {
+        collection: product.size.collection.name,
+        size: product.size.name,
+      };
+    }
+  }
+  return {};
 }
 
 export default async function ProductsPage() {
@@ -52,7 +74,7 @@ export default async function ProductsPage() {
                   Product
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Category
+                  Placement
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Price
@@ -70,66 +92,88 @@ export default async function ProductsPage() {
             </thead>
             <tbody className="divide-y divide-gray-200">
               {products.length > 0 ? (
-                products.map((product: Product) => (
-                  <tr key={product.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-4">
-                        <div className="relative w-12 h-12 bg-gray-100 rounded overflow-hidden flex-shrink-0">
-                          <Image
-                            src={product.thumbnail || product.images?.[0] || "/placeholder-rug.svg"}
-                            alt={product.name}
-                            fill
-                            className="object-cover"
-                          />
+                products.map((product: Product) => {
+                  const hierarchy = getProductHierarchy(product);
+                  return (
+                    <tr key={product.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-4">
+                          <div className="relative w-12 h-12 bg-gray-100 rounded overflow-hidden flex-shrink-0">
+                            <Image
+                              src={product.thumbnail || product.images?.[0] || "/placeholder-rug.svg"}
+                              alt={product.name}
+                              fill
+                              className="object-cover"
+                            />
+                          </div>
+                          <div>
+                            <p className="font-medium text-gray-900">{product.name}</p>
+                            <p className="text-sm text-gray-500">SKU: {product.sku}</p>
+                          </div>
                         </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex flex-col gap-1">
+                          {hierarchy.collection && (
+                            <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-blue-100 text-blue-800 w-fit">
+                              {hierarchy.collection}
+                            </span>
+                          )}
+                          {hierarchy.category && (
+                            <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-purple-100 text-purple-800 w-fit">
+                              {hierarchy.category}
+                            </span>
+                          )}
+                          {hierarchy.size && (
+                            <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-green-100 text-green-800 w-fit">
+                              {hierarchy.size}
+                            </span>
+                          )}
+                          {!hierarchy.collection && !hierarchy.category && !hierarchy.size && (
+                            <span className="text-gray-400 text-sm">Unassigned</span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
                         <div>
-                          <p className="font-medium text-gray-900">{product.name}</p>
-                          <p className="text-sm text-gray-500">SKU: {product.sku}</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-gray-600">
-                      {product.category?.name || "Uncategorized"}
-                    </td>
-                    <td className="px-6 py-4">
-                      <div>
-                        <p className="font-medium text-gray-900">
-                          {formatCurrency(Number(product.price))}
-                        </p>
-                        {product.salePrice && (
-                          <p className="text-sm text-green-600">
-                            Sale: {formatCurrency(Number(product.salePrice))}
+                          <p className="font-medium text-gray-900">
+                            {formatCurrency(Number(product.price))}
                           </p>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-gray-600">
-                      {product.stock}
-                    </td>
-                    <td className="px-6 py-4">
-                      <span
-                        className={`px-2 py-1 text-xs font-medium rounded-full ${
-                          product.inStock
-                            ? "bg-green-100 text-green-800"
-                            : "bg-red-100 text-red-800"
-                        }`}
-                      >
-                        {product.inStock ? "In Stock" : "Out of Stock"}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <Link
-                          href={`/admin/products/${product.id}/edit`}
-                          className="px-3 py-1 text-sm text-primary-600 hover:text-primary-800 font-medium"
+                          {product.salePrice && (
+                            <p className="text-sm text-green-600">
+                              Sale: {formatCurrency(Number(product.salePrice))}
+                            </p>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-gray-600">
+                        {product.stock}
+                      </td>
+                      <td className="px-6 py-4">
+                        <span
+                          className={`px-2 py-1 text-xs font-medium rounded-full ${
+                            product.inStock
+                              ? "bg-green-100 text-green-800"
+                              : "bg-red-100 text-red-800"
+                          }`}
                         >
-                          Edit
-                        </Link>
-                        <DeleteProductButton productId={product.id} productName={product.name} />
-                      </div>
-                    </td>
-                  </tr>
-                ))
+                          {product.inStock ? "In Stock" : "Out of Stock"}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <Link
+                            href={`/admin/products/${product.id}/edit`}
+                            className="px-3 py-1 text-sm text-primary-600 hover:text-primary-800 font-medium"
+                          >
+                            Edit
+                          </Link>
+                          <DeleteProductButton productId={product.id} productName={product.name} />
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
               ) : (
                 <tr>
                   <td colSpan={6} className="px-6 py-12 text-center text-gray-500">

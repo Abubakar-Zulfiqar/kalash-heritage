@@ -1,15 +1,16 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getDatabase } from "@/lib/db";
-import { User, UserRole } from "@/entities/User";
-import { Order } from "@/entities/Order";
-import { ShippingAddress } from "@/entities/ShippingAddress";
+import type { User } from "@/entities/User";
+import { UserRole } from "@/entities/User";
+import type { Order } from "@/entities/Order";
+import type { ShippingAddress } from "@/entities/ShippingAddress";
 import UserRoleForm from "./UserRoleForm";
 
 async function getUser(id: string) {
   try {
     const db = await getDatabase();
-    const userRepo = db.getRepository(User);
+    const userRepo = db.getRepository("User");
     return await userRepo.findOne({
       where: { id },
       relations: ["orders", "orders.shippingAddress", "addresses"],

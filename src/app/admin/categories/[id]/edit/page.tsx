@@ -1,17 +1,37 @@
 import { notFound } from "next/navigation";
 import CategoryForm from "@/components/admin/CategoryForm";
 import { getDatabase } from "@/lib/db";
-import { Category } from "@/entities/Category";
+import type { Category } from "@/entities/Category";
+import type { Collection } from "@/entities/Collection";
 import Link from "next/link";
 
 async function getCategory(id: string) {
   try {
     const db = await getDatabase();
-    const categoryRepo = db.getRepository(Category);
-    return await categoryRepo.findOne({ where: { id } });
+    const categoryRepo = db.getRepository("Category");
+    const category = await categoryRepo.findOne({
+      where: { id },
+      relations: ["collection"],
+    }) as Category | null;
+    return category ? JSON.parse(JSON.stringify(category)) : null;
   } catch (error) {
     console.error("Error fetching category:", error);
     return null;
+  }
+}
+
+async function getCollectionsWithCategories() {
+  try {
+    const db = await getDatabase();
+    const collectionRepo = db.getRepository("Collection");
+    const collections = await collectionRepo.find({
+      where: { hasCategories: true },
+      order: { displayOrder: "ASC" },
+    }) as Collection[];
+    return JSON.parse(JSON.stringify(collections));
+  } catch (error) {
+    console.error("Error fetching collections:", error);
+    return [];
   }
 }
 
@@ -21,7 +41,10 @@ export default async function EditCategoryPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const category = await getCategory(id);
+  const [category, collections] = await Promise.all([
+    getCategory(id),
+    getCollectionsWithCategories(),
+  ]);
 
   if (!category) {
     notFound();
@@ -41,6 +64,7 @@ export default async function EditCategoryPage({
       </div>
 
       <CategoryForm
+        collections={collections}
         initialData={{
           id: category.id,
           name: category.name,
@@ -48,6 +72,7 @@ export default async function EditCategoryPage({
           description: category.description || undefined,
           image: category.image || undefined,
           displayOrder: category.displayOrder,
+          collectionId: category.collectionId,
         }}
       />
     </div>

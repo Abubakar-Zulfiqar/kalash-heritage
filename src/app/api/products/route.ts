@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDatabase } from "@/lib/db";
 import { Product } from "@/entities/Product";
-import { Like } from "typeorm";
 
 // Force dynamic rendering to prevent build-time database access
 export const dynamic = 'force-dynamic';
@@ -17,10 +16,11 @@ export async function GET(request: NextRequest) {
     const skip = (page - 1) * limit;
 
     // Filters
+    const collection = searchParams.get("collection");
     const category = searchParams.get("category");
+    const sizeSlug = searchParams.get("size");
     const minPrice = searchParams.get("minPrice");
     const maxPrice = searchParams.get("maxPrice");
-    const size = searchParams.get("size");
     const color = searchParams.get("color");
     const style = searchParams.get("style");
     const material = searchParams.get("material");
@@ -32,14 +32,30 @@ export async function GET(request: NextRequest) {
     const db = await getDatabase();
     const productRepository = db.getRepository(Product);
 
-    // Build query
+    // Build query with new hierarchy: Product -> Size -> Category/Collection
     const queryBuilder = productRepository
       .createQueryBuilder("product")
-      .leftJoinAndSelect("product.category", "category");
+      .leftJoinAndSelect("product.size", "size")
+      .leftJoinAndSelect("size.category", "category")
+      .leftJoinAndSelect("size.collection", "sizeCollection")
+      .leftJoinAndSelect("category.collection", "categoryCollection");
 
-    // Apply filters
+    // Filter by collection (either direct on size or through category)
+    if (collection) {
+      queryBuilder.andWhere(
+        "(sizeCollection.slug = :collection OR categoryCollection.slug = :collection)",
+        { collection }
+      );
+    }
+
+    // Filter by category (through size)
     if (category) {
       queryBuilder.andWhere("category.slug = :category", { category });
+    }
+
+    // Filter by size slug
+    if (sizeSlug) {
+      queryBuilder.andWhere("size.slug = :sizeSlug", { sizeSlug });
     }
 
     if (minPrice) {
@@ -48,10 +64,6 @@ export async function GET(request: NextRequest) {
 
     if (maxPrice) {
       queryBuilder.andWhere("product.price <= :maxPrice", { maxPrice: parseFloat(maxPrice) });
-    }
-
-    if (size) {
-      queryBuilder.andWhere("product.size LIKE :size", { size: `%${size}%` });
     }
 
     if (color) {
@@ -77,6 +89,8 @@ export async function GET(request: NextRequest) {
       queryBuilder.andWhere("product.featured = :featured", { featured: true });
     }
 
+    // Exclude soft-deleted products
+    queryBuilder.andWhere("product.deletedAt IS NULL");
     queryBuilder.andWhere("product.inStock = :inStock", { inStock: true });
 
     // Count total
