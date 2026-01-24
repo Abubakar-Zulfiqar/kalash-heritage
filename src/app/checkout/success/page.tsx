@@ -1,36 +1,6 @@
 import Link from "next/link";
-import { getDatabase } from "@/lib/db";
 
-async function getOrder(orderId: string) {
-  try {
-    const db = await getDatabase();
-    const { Order: OrderEntity } = await import("@/entities/Order");
-    const orderRepo = db.getRepository(OrderEntity);
-    return await orderRepo.findOne({
-      where: { id: orderId },
-      relations: ["shippingAddress", "items", "items.product"],
-    });
-  } catch (error) {
-    console.error("Error fetching order:", error);
-    return null;
-  }
-}
-
-function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-  }).format(amount);
-}
-
-export default async function CheckoutSuccessPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ orderId?: string }>;
-}) {
-  const { orderId } = await searchParams;
-  const order = orderId ? await getOrder(orderId) : null;
-
+export default function InquirySuccessPage() {
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4">
       <div className="max-w-md w-full bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
@@ -52,65 +22,79 @@ export default async function CheckoutSuccessPage({
         </div>
 
         <h1 className="text-2xl font-bold text-gray-900 mb-2">
-          Order Placed Successfully!
+          Inquiry Submitted Successfully!
         </h1>
 
-        {order ? (
-          <>
-            <p className="text-gray-600 mb-6">
-              Thank you for your order. Your order number is{" "}
-              <span className="font-semibold text-gray-900">
-                {order.orderNumber}
-              </span>
-            </p>
+        <p className="text-gray-600 mb-6">
+          Thank you for your interest in our products. We have received your
+          inquiry and our team will review it shortly.
+        </p>
 
-            <div className="bg-gray-50 rounded-lg p-4 mb-6 text-left">
-              <h3 className="font-semibold text-gray-900 mb-2">Order Details</h3>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Order Number</span>
-                  <span className="font-medium">{order.orderNumber}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Items</span>
-                  <span className="font-medium">{order.items?.length || 0}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Total</span>
-                  <span className="font-medium">
-                    {formatCurrency(Number(order.total))}
-                  </span>
-                </div>
-              </div>
-            </div>
+        <div className="bg-primary-50 border border-primary-100 rounded-lg p-4 mb-6 text-left">
+          <h3 className="font-semibold text-primary-800 mb-2">What happens next?</h3>
+          <ul className="text-sm text-primary-700 space-y-2">
+            <li className="flex items-start gap-2">
+              <svg
+                className="w-4 h-4 text-primary-600 mt-0.5 flex-shrink-0"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M5 13l4 4L19 7"
+                />
+              </svg>
+              <span>Our team will review your product inquiry</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <svg
+                className="w-4 h-4 text-primary-600 mt-0.5 flex-shrink-0"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M5 13l4 4L19 7"
+                />
+              </svg>
+              <span>You&apos;ll receive wholesale pricing via email</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <svg
+                className="w-4 h-4 text-primary-600 mt-0.5 flex-shrink-0"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M5 13l4 4L19 7"
+                />
+              </svg>
+              <span>Expected response time: 24-48 business hours</span>
+            </li>
+          </ul>
+        </div>
 
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6 text-left">
-              <h3 className="font-semibold text-yellow-800 mb-1">
-                Payment Pending
-              </h3>
-              <p className="text-sm text-yellow-700">
-                Your order is awaiting payment. Our team will contact you shortly
-                with payment instructions.
-              </p>
-            </div>
-
-            <p className="text-sm text-gray-500 mb-6">
-              A confirmation email will be sent to{" "}
-              <span className="font-medium">{order.shippingAddress?.email}</span>
-            </p>
-          </>
-        ) : (
-          <p className="text-gray-600 mb-6">
-            Thank you for your order. You will receive a confirmation email shortly.
-          </p>
-        )}
+        <p className="text-sm text-gray-500 mb-6">
+          A confirmation email has been sent to your email address with the
+          details of your inquiry.
+        </p>
 
         <div className="space-y-3">
           <Link
             href="/shop"
             className="block w-full py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition-colors"
           >
-            Continue Shopping
+            Continue Browsing
           </Link>
           <Link
             href="/"

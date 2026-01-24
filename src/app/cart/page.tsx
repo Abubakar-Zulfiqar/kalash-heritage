@@ -1,34 +1,18 @@
 "use client";
 
-import { useCartStore } from "@/store/cartStore";
-import { useCurrencyStore } from "@/store/currencyStore";
-import { CurrencyService } from "@/services/currency/CurrencyService";
+import { useInquiryStore } from "@/store/inquiryStore";
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import toast from "react-hot-toast";
 
-export default function CartPage() {
-  const { items, removeItem, updateQuantity, clearCart, getTotalPrice } = useCartStore();
-  const { currency } = useCurrencyStore();
+export default function InquiryListPage() {
+  const { items, removeItem, updateQuantity, clearInquiry, getTotalItems } = useInquiryStore();
 
-  const subtotal = getTotalPrice();
-  const convertedSubtotal = CurrencyService.convert(subtotal, "USD", currency);
-  const formattedSubtotal = CurrencyService.formatPrice(convertedSubtotal, currency);
-
-  // Estimate shipping (we'll calculate exact shipping at checkout)
-  const estimatedShipping = 50;
-  const convertedShipping = CurrencyService.convert(estimatedShipping, "USD", currency);
-  const formattedShipping = CurrencyService.formatPrice(convertedShipping, currency);
-
-  const total = subtotal + estimatedShipping;
-  const convertedTotal = CurrencyService.convert(total, "USD", currency);
-  const formattedTotal = CurrencyService.formatPrice(convertedTotal, currency);
-
-  const handleClearCart = () => {
-    if (confirm("Are you sure you want to clear your cart?")) {
-      clearCart();
-      toast.success("Cart cleared");
+  const handleClearList = () => {
+    if (confirm("Are you sure you want to clear your inquiry list?")) {
+      clearInquiry();
+      toast.success("Inquiry list cleared");
     }
   };
 
@@ -51,20 +35,20 @@ export default function CartPage() {
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth={2}
-                d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
+                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
               />
             </svg>
             <h1 className="text-3xl font-serif font-bold text-gray-900 mb-4">
-              Your Cart is Empty
+              Your Inquiry List is Empty
             </h1>
             <p className="text-gray-600 mb-8">
-              Looks like you haven't added any items to your cart yet.
+              Browse our collection and add products you're interested in to your inquiry list.
             </p>
             <Link
               href="/shop"
               className="inline-block bg-primary-600 text-white px-8 py-4 rounded font-semibold hover:bg-primary-700 transition-colors"
             >
-              Continue Shopping
+              Browse Products
             </Link>
           </motion.div>
         </div>
@@ -82,121 +66,102 @@ export default function CartPage() {
           className="mb-8"
         >
           <h1 className="text-4xl font-serif font-bold text-gray-900 mb-2">
-            Shopping Cart
+            My Inquiry List
           </h1>
           <p className="text-gray-600">
-            {items.length} {items.length === 1 ? "item" : "items"} in your cart
+            {getTotalItems()} {getTotalItems() === 1 ? "item" : "items"} in your inquiry list
           </p>
         </motion.div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Cart Items */}
+          {/* Inquiry Items */}
           <div className="lg:col-span-2">
             <div className="bg-white rounded-lg shadow-sm overflow-hidden">
               {/* Table Header */}
               <div className="hidden md:grid grid-cols-12 gap-4 p-6 bg-gray-50 border-b border-gray-200 font-semibold text-sm text-gray-700">
                 <div className="col-span-6">Product</div>
-                <div className="col-span-2 text-center">Price</div>
-                <div className="col-span-2 text-center">Quantity</div>
-                <div className="col-span-2 text-right">Total</div>
+                <div className="col-span-3 text-center">Quantity</div>
+                <div className="col-span-3 text-right">Actions</div>
               </div>
 
-              {/* Cart Items */}
+              {/* Items */}
               <div className="divide-y divide-gray-200">
-                {items.map((item, index) => {
-                  const itemPrice = CurrencyService.convert(item.price, "USD", currency);
-                  const itemTotal = CurrencyService.convert(
-                    item.price * item.quantity,
-                    "USD",
-                    currency
-                  );
-
-                  return (
-                    <motion.div
-                      key={item.productId}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: index * 0.1 }}
-                      className="grid grid-cols-1 md:grid-cols-12 gap-4 p-6"
-                    >
-                      {/* Product Info */}
-                      <div className="md:col-span-6 flex gap-4">
-                        <div className="w-24 h-24 bg-gray-100 rounded overflow-hidden flex-shrink-0 relative">
-                          <Image
-                            src={item.image || "/placeholder-rug.svg"}
-                            alt={item.name}
-                            fill
-                            className="object-cover"
-                          />
-                        </div>
-                        <div className="flex-1">
-                          <Link
-                            href={`/shop/${item.slug}`}
-                            className="font-semibold text-gray-900 hover:text-primary-600 line-clamp-2"
-                          >
-                            {item.name}
-                          </Link>
-                          <button
-                            onClick={() => {
-                              removeItem(item.productId);
-                              toast.success("Removed from cart");
-                            }}
-                            className="text-sm text-red-600 hover:text-red-800 mt-2"
-                          >
-                            Remove
-                          </button>
-                        </div>
+                {items.map((item, index) => (
+                  <motion.div
+                    key={item.productId}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                    className="grid grid-cols-1 md:grid-cols-12 gap-4 p-6"
+                  >
+                    {/* Product Info */}
+                    <div className="md:col-span-6 flex gap-4">
+                      <div className="w-24 h-24 bg-gray-100 rounded overflow-hidden flex-shrink-0 relative">
+                        <Image
+                          src={item.image || "/placeholder-rug.svg"}
+                          alt={item.name}
+                          fill
+                          className="object-cover"
+                        />
                       </div>
+                      <div className="flex-1">
+                        <Link
+                          href={`/shop/${item.slug}`}
+                          className="font-semibold text-gray-900 hover:text-primary-600 line-clamp-2"
+                        >
+                          {item.name}
+                        </Link>
+                        {item.sku && (
+                          <p className="text-sm text-gray-500 mt-1">SKU: {item.sku}</p>
+                        )}
+                      </div>
+                    </div>
 
-                      {/* Price */}
-                      <div className="md:col-span-2 flex md:justify-center items-center">
-                        <span className="md:hidden font-semibold mr-2">Price:</span>
-                        <span className="font-medium text-gray-900">
-                          {CurrencyService.formatPrice(itemPrice, currency)}
+                    {/* Quantity */}
+                    <div className="md:col-span-3 flex md:justify-center items-center">
+                      <span className="md:hidden font-semibold mr-2">Quantity:</span>
+                      <div className="flex items-center border border-gray-300 rounded">
+                        <button
+                          onClick={() => updateQuantity(item.productId, item.quantity - 1)}
+                          className="px-3 py-1 hover:bg-gray-100 transition-colors"
+                        >
+                          −
+                        </button>
+                        <span className="px-4 py-1 border-x border-gray-300 font-medium min-w-[3rem] text-center">
+                          {item.quantity}
                         </span>
+                        <button
+                          onClick={() => updateQuantity(item.productId, item.quantity + 1)}
+                          className="px-3 py-1 hover:bg-gray-100 transition-colors"
+                        >
+                          +
+                        </button>
                       </div>
+                    </div>
 
-                      {/* Quantity */}
-                      <div className="md:col-span-2 flex md:justify-center items-center">
-                        <span className="md:hidden font-semibold mr-2">Quantity:</span>
-                        <div className="flex items-center border border-gray-300 rounded">
-                          <button
-                            onClick={() => updateQuantity(item.productId, item.quantity - 1)}
-                            className="px-3 py-1 hover:bg-gray-100 transition-colors"
-                          >
-                            −
-                          </button>
-                          <span className="px-4 py-1 border-x border-gray-300 font-medium min-w-[3rem] text-center">
-                            {item.quantity}
-                          </span>
-                          <button
-                            onClick={() => updateQuantity(item.productId, item.quantity + 1)}
-                            className="px-3 py-1 hover:bg-gray-100 transition-colors"
-                          >
-                            +
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Total */}
-                      <div className="md:col-span-2 flex md:justify-end items-center">
-                        <span className="md:hidden font-semibold mr-2">Total:</span>
-                        <span className="font-bold text-gray-900">
-                          {CurrencyService.formatPrice(itemTotal, currency)}
-                        </span>
-                      </div>
-                    </motion.div>
-                  );
-                })}
+                    {/* Actions */}
+                    <div className="md:col-span-3 flex md:justify-end items-center">
+                      <button
+                        onClick={() => {
+                          removeItem(item.productId);
+                          toast.success("Removed from inquiry list");
+                        }}
+                        className="text-sm text-red-600 hover:text-red-800 font-medium"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  </motion.div>
+                ))}
               </div>
 
-              {/* Clear Cart Button */}
+              {/* Clear List Button */}
               <div className="p-6 border-t border-gray-200">
                 <button
-                  onClick={handleClearCart}
+                  onClick={handleClearList}
                   className="text-sm text-red-600 hover:text-red-800 font-medium"
                 >
-                  Clear Cart
+                  Clear Inquiry List
                 </button>
               </div>
             </div>
@@ -220,34 +185,34 @@ export default function CartPage() {
                     d="M15 19l-7-7 7-7"
                   />
                 </svg>
-                Continue Shopping
+                Continue Browsing
               </Link>
             </div>
           </div>
 
-          {/* Order Summary */}
+          {/* Submit Inquiry Panel */}
           <div className="lg:col-span-1">
             <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               className="bg-white rounded-lg shadow-sm p-6 sticky top-24"
             >
-              <h2 className="text-xl font-serif font-bold text-gray-900 mb-6">
-                Order Summary
+              <h2 className="text-xl font-serif font-bold text-gray-900 mb-4">
+                Ready to Inquire?
               </h2>
+
+              <p className="text-gray-600 mb-6">
+                Submit your inquiry list and our team will contact you with wholesale pricing and availability.
+              </p>
 
               <div className="space-y-4 mb-6">
                 <div className="flex justify-between text-gray-700">
-                  <span>Subtotal</span>
-                  <span className="font-medium">{formattedSubtotal}</span>
+                  <span>Total Products</span>
+                  <span className="font-medium">{items.length}</span>
                 </div>
                 <div className="flex justify-between text-gray-700">
-                  <span>Estimated Shipping</span>
-                  <span className="font-medium">{formattedShipping}</span>
-                </div>
-                <div className="border-t border-gray-200 pt-4 flex justify-between text-lg font-bold text-gray-900">
-                  <span>Total</span>
-                  <span>{formattedTotal}</span>
+                  <span>Total Pieces</span>
+                  <span className="font-medium">{getTotalItems()}</span>
                 </div>
               </div>
 
@@ -255,11 +220,11 @@ export default function CartPage() {
                 href="/checkout"
                 className="block w-full bg-primary-600 text-white text-center py-4 rounded font-semibold hover:bg-primary-700 transition-colors mb-4"
               >
-                Proceed to Checkout
+                Submit Inquiry
               </Link>
 
               <p className="text-xs text-gray-600 text-center">
-                Shipping costs will be calculated at checkout based on your location.
+                Our team typically responds within 24-48 business hours.
               </p>
 
               {/* Trust Badges */}
@@ -279,7 +244,7 @@ export default function CartPage() {
                         d="M5 13l4 4L19 7"
                       />
                     </svg>
-                    <span>Secure payment</span>
+                    <span>Wholesale pricing available</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <svg
@@ -311,7 +276,7 @@ export default function CartPage() {
                         d="M5 13l4 4L19 7"
                       />
                     </svg>
-                    <span>Free shipping on $500+</span>
+                    <span>Custom orders welcome</span>
                   </div>
                 </div>
               </div>

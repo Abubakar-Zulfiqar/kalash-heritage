@@ -5,9 +5,7 @@ import { useParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { useCurrencyStore } from "@/store/currencyStore";
-import { CurrencyService } from "@/services/currency/CurrencyService";
-import { useCartStore } from "@/store/cartStore";
+import { useInquiryStore } from "@/store/inquiryStore";
 import toast from "react-hot-toast";
 
 interface Product {
@@ -15,8 +13,6 @@ interface Product {
   name: string;
   slug: string;
   description: string;
-  price: number;
-  salePrice?: number;
   images: string[];
   dimensions?: string;
   material?: string;
@@ -58,8 +54,7 @@ export default function ProductDetailPage() {
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
 
-  const { currency } = useCurrencyStore();
-  const addItem = useCartStore((state) => state.addItem);
+  const addItem = useInquiryStore((state) => state.addItem);
 
   useEffect(() => {
     fetch(`/api/products/${slug}`)
@@ -109,17 +104,13 @@ export default function ProductDetailPage() {
     );
   }
 
-  const displayPrice = product.salePrice || product.price;
-  const convertedPrice = CurrencyService.convert(displayPrice, "USD", currency);
-  const formattedPrice = CurrencyService.formatPrice(convertedPrice, currency);
-
-  const handleAddToCart = () => {
+  const handleAddToInquiry = () => {
     addItem({
       productId: product.id,
       name: product.name,
-      price: displayPrice,
       image: product.images[0],
       slug: product.slug,
+      sku: product.sku,
       quantity,
     });
     toast.success(`Added ${quantity} piece(s) to your inquiry list`);
@@ -187,11 +178,6 @@ export default function ProductDetailPage() {
                 className="object-cover"
                 priority
               />
-              {product.salePrice && (
-                <div className="absolute top-4 right-4 bg-accent-500 text-white px-4 py-2 text-sm font-semibold">
-                  SALE
-                </div>
-              )}
             </motion.div>
 
             {/* Thumbnails */}
@@ -232,31 +218,14 @@ export default function ProductDetailPage() {
               {product.name}
             </h1>
 
-            <div className="flex items-center gap-4 mb-6">
-              {product.salePrice ? (
-                <>
-                  <span className="text-3xl font-bold text-accent-600">
-                    {formattedPrice}
-                  </span>
-                  <span className="text-xl text-gray-500 line-through">
-                    {CurrencyService.formatPrice(
-                      CurrencyService.convert(product.price, "USD", currency),
-                      currency
-                    )}
-                  </span>
-                  <span className="bg-accent-100 text-accent-800 px-3 py-1 rounded text-sm font-semibold">
-                    Save{" "}
-                    {Math.round(
-                      ((product.price - product.salePrice) / product.price) * 100
-                    )}
-                    %
-                  </span>
-                </>
-              ) : (
-                <span className="text-3xl font-bold text-gray-900">
-                  {formattedPrice}
-                </span>
-              )}
+            {/* Contact for Pricing */}
+            <div className="mb-6 p-4 bg-primary-50 rounded-lg border border-primary-100">
+              <p className="text-xl font-semibold text-primary-700">
+                Contact for Pricing
+              </p>
+              <p className="text-sm text-primary-600 mt-1">
+                Add to your inquiry list or contact us directly for wholesale pricing
+              </p>
             </div>
 
             <p className="text-lg text-gray-700 mb-8 leading-relaxed">
@@ -337,36 +306,30 @@ export default function ProductDetailPage() {
                     {quantity}
                   </span>
                   <button
-                    onClick={() =>
-                      setQuantity((q) => Math.min(product.stock, q + 1))
-                    }
+                    onClick={() => setQuantity((q) => q + 1)}
                     className="px-4 py-2 hover:bg-gray-100 transition-colors"
                   >
                     +
                   </button>
                 </div>
-                <span className="text-sm text-gray-600">
-                  {product.stock} available
-                </span>
               </div>
 
               <div className="flex gap-3">
                 <button
-                  onClick={handleAddToCart}
-                  disabled={product.stock === 0}
-                  className="flex-1 bg-primary-600 text-white py-4 rounded font-semibold text-lg hover:bg-primary-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
+                  onClick={handleAddToInquiry}
+                  className="flex-1 bg-primary-600 text-white py-4 rounded font-semibold text-lg hover:bg-primary-700 transition-colors"
                 >
-                  {product.stock === 0 ? "Currently Unavailable" : "Add to Inquiry List"}
+                  Add to Inquiry List
                 </button>
                 <Link
                   href="/contact"
                   className="flex-1 bg-white border-2 border-primary-600 text-primary-600 py-4 rounded font-semibold text-lg hover:bg-primary-50 transition-colors text-center flex items-center justify-center"
                 >
-                  Contact About This Piece
+                  Contact Us Directly
                 </Link>
               </div>
               <p className="text-sm text-gray-600 mt-3 text-center">
-                Add to your inquiry list or contact us directly to discuss this heritage piece
+                Add products to your inquiry list and submit for wholesale pricing
               </p>
             </div>
 
@@ -434,7 +397,7 @@ export default function ProductDetailPage() {
                     d="M5 13l4 4L19 7"
                   />
                 </svg>
-                <span className="text-gray-700">Secure Payment</span>
+                <span className="text-gray-700">Wholesale Available</span>
               </div>
             </div>
           </motion.div>

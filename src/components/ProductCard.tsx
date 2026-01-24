@@ -2,9 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useCurrencyStore } from "@/store/currencyStore";
-import { CurrencyService } from "@/services/currency/CurrencyService";
-import { useCartStore } from "@/store/cartStore";
+import { useInquiryStore } from "@/store/inquiryStore";
 import toast from "react-hot-toast";
 
 interface ProductCardProps {
@@ -12,8 +10,7 @@ interface ProductCardProps {
     id: string;
     name: string;
     slug: string;
-    price: number;
-    salePrice?: number;
+    sku?: string;
     images: string[];
     size?: string;
     material?: string;
@@ -22,21 +19,16 @@ interface ProductCardProps {
 }
 
 export default function ProductCard({ product }: ProductCardProps) {
-  const { currency } = useCurrencyStore();
-  const addItem = useCartStore((state) => state.addItem);
+  const addItem = useInquiryStore((state) => state.addItem);
 
-  const displayPrice = product.salePrice || product.price;
-  const convertedPrice = CurrencyService.convert(displayPrice, "USD", currency);
-  const formattedPrice = CurrencyService.formatPrice(convertedPrice, currency);
-
-  const handleAddToCart = (e: React.MouseEvent) => {
+  const handleAddToInquiry = (e: React.MouseEvent) => {
     e.preventDefault();
     addItem({
       productId: product.id,
       name: product.name,
-      price: displayPrice,
       image: product.images[0],
       slug: product.slug,
+      sku: product.sku,
     });
     toast.success("Added to inquiry list");
   };
@@ -50,18 +42,13 @@ export default function ProductCard({ product }: ProductCardProps) {
           fill
           className="object-cover group-hover:scale-105 transition-transform duration-500"
         />
-        {product.salePrice && (
-          <div className="absolute top-4 right-4 bg-accent-500 text-white px-3 py-1 text-sm font-semibold">
-            SALE
-          </div>
-        )}
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
           <button
-            onClick={handleAddToCart}
+            onClick={handleAddToInquiry}
             className="bg-white text-gray-900 px-4 py-2 text-sm font-semibold hover:bg-gray-100 border border-gray-300"
             title="Add to inquiry list"
           >
-            Inquire
+            Add to Inquiry
           </button>
         </div>
       </div>
@@ -71,25 +58,9 @@ export default function ProductCard({ product }: ProductCardProps) {
           {product.name}
         </h3>
 
-        <div className="flex items-center gap-2 mb-2">
-          {product.salePrice ? (
-            <>
-              <span className="text-lg font-bold text-accent-600">
-                {formattedPrice}
-              </span>
-              <span className="text-sm text-gray-500 line-through">
-                {CurrencyService.formatPrice(
-                  CurrencyService.convert(product.price, "USD", currency),
-                  currency
-                )}
-              </span>
-            </>
-          ) : (
-            <span className="text-lg font-bold text-gray-900">
-              {formattedPrice}
-            </span>
-          )}
-        </div>
+        <p className="text-primary-600 font-medium mb-2">
+          Contact for pricing
+        </p>
 
         <div className="flex flex-wrap gap-2 text-sm text-gray-600">
           {product.size && <span>{product.size}</span>}
