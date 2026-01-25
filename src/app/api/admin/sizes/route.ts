@@ -54,73 +54,82 @@ export async function POST(request: NextRequest) {
       .replace(/(^-|-$)/g, "");
 
     const db = await getDatabase();
-    const { Size: SizeEntity } = await import("@/entities/Size");
-    const { Collection: CollectionEntity } = await import("@/entities/Collection");
-    const { Category: CategoryEntity } = await import("@/entities/Category");
-    const sizeRepo = db.getRepository(SizeEntity);
-    const collectionRepo = db.getRepository(CollectionEntity);
-    const categoryRepo = db.getRepository(CategoryEntity);
 
     let displayOrder = 1;
 
     if (categoryId) {
-      // Validate category exists
-      const category = await categoryRepo.findOne({
-        where: { id: categoryId },
-        relations: ["collection"],
-      });
-      if (!category) {
+      // Validate category exists using raw query to avoid entity import
+      const categoryResult = await db.query(
+        `SELECT id, "collectionId" FROM categories WHERE id = $1`,
+        [categoryId]
+      );
+      if (!categoryResult || categoryResult.length === 0) {
         return NextResponse.json({ error: "Category not found" }, { status: 404 });
       }
 
       // Check for duplicate slug within the same category
-      const existingSlug = await sizeRepo.findOne({
-        where: { slug, categoryId },
-      });
-      if (existingSlug) {
+      const existingSlugResult = await db.query(
+        `SELECT id FROM sizes WHERE slug = $1 AND "categoryId" = $2`,
+        [slug, categoryId]
+      );
+      if (existingSlugResult && existingSlugResult.length > 0) {
         return NextResponse.json({ error: "A size with this name already exists in this category" }, { status: 400 });
       }
 
       // Calculate displayOrder
-      const count = await sizeRepo.count({ where: { categoryId } });
-      displayOrder = count + 1;
+      const countResult = await db.query(
+        `SELECT COUNT(*) as count FROM sizes WHERE "categoryId" = $1`,
+        [categoryId]
+      );
+      displayOrder = parseInt(countResult[0].count) + 1;
 
     } else if (collectionId) {
-      // Validate collection exists
-      const collection = await collectionRepo.findOne({ where: { id: collectionId } });
-      if (!collection) {
+      // Validate collection exists and check hasCategories
+      const collectionResult = await db.query(
+        `SELECT id, "hasCategories" FROM collections WHERE id = $1`,
+        [collectionId]
+      );
+      if (!collectionResult || collectionResult.length === 0) {
         return NextResponse.json({ error: "Collection not found" }, { status: 404 });
       }
-      if (collection.hasCategories) {
+      if (collectionResult[0].hasCategories) {
         return NextResponse.json({ error: "This collection has categories. Please select a category instead." }, { status: 400 });
       }
 
-      // Check for duplicate slug within the same collection
-      // Get all sizes for this collection and filter in code
-      const existingSizes = await sizeRepo.find({ where: { collectionId } });
-      const existingSlug = existingSizes.find((s: { slug: string; categoryId?: string | null }) => s.slug === slug && !s.categoryId);
-      if (existingSlug) {
+      // Check for duplicate slug within the same collection (without category)
+      const existingSlugResult = await db.query(
+        `SELECT id FROM sizes WHERE slug = $1 AND "collectionId" = $2 AND "categoryId" IS NULL`,
+        [slug, collectionId]
+      );
+      if (existingSlugResult && existingSlugResult.length > 0) {
         return NextResponse.json({ error: "A size with this name already exists in this collection" }, { status: 400 });
       }
 
-      // Calculate displayOrder - count sizes without category
-      const sizesWithoutCategory = existingSizes.filter((s: { categoryId?: string | null }) => !s.categoryId);
-      displayOrder = sizesWithoutCategory.length + 1;
+      // Calculate displayOrder - count sizes without category in this collection
+      const countResult = await db.query(
+        `SELECT COUNT(*) as count FROM sizes WHERE "collectionId" = $1 AND "categoryId" IS NULL`,
+        [collectionId]
+      );
+      displayOrder = parseInt(countResult[0].count) + 1;
     }
 
-    const size = sizeRepo.create({
-      name,
-      slug,
-      description: description || null,
-      image: image || null,
-      displayOrder,
-      collectionId: categoryId ? null : collectionId,
-      categoryId: categoryId || null,
-    });
+    // Insert the new size using raw query
+    const insertResult = await db.query(
+      `INSERT INTO sizes (id, name, slug, description, image, "displayOrder", "collectionId", "categoryId", "createdAt", "updatedAt")
+       VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
+       RETURNING *`,
+      [
+        name,
+        slug,
+        description || null,
+        image || null,
+        displayOrder,
+        categoryId ? null : collectionId,
+        categoryId || null,
+      ]
+    );
 
-    const savedSize = await sizeRepo.save(size);
-
-    return NextResponse.json(savedSize, { status: 201 });
+    return NextResponse.json(insertResult[0], { status: 201 });
   } catch (error) {
     console.error("Error creating size:", error);
     return NextResponse.json({ error: "Failed to create size" }, { status: 500 });
