@@ -74,40 +74,40 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Customer Service */}
+          {/* Business */}
           <div>
-            <h4 className="text-white font-semibold mb-4">Customer Service</h4>
+            <h4 className="text-white font-semibold mb-4">For Business</h4>
             <ul className="space-y-2 text-sm">
               <li>
                 <Link
-                  href="/shipping"
+                  href="/contact"
                   className="hover:text-white transition-colors"
                 >
-                  Shipping Information
+                  Wholesale Inquiry
                 </Link>
               </li>
               <li>
                 <Link
-                  href="/returns"
+                  href="/contact"
                   className="hover:text-white transition-colors"
                 >
-                  Returns & Exchanges
+                  Custom Orders
                 </Link>
               </li>
               <li>
                 <Link
-                  href="/faq"
+                  href="/contact"
                   className="hover:text-white transition-colors"
                 >
-                  FAQ
+                  Become a Partner
                 </Link>
               </li>
               <li>
                 <Link
-                  href="/care-guide"
+                  href="/contact"
                   className="hover:text-white transition-colors"
                 >
-                  Rug Care Guide
+                  Request Catalog
                 </Link>
               </li>
             </ul>

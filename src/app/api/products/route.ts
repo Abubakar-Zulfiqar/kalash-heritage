@@ -141,6 +141,37 @@ export async function GET(request: NextRequest) {
     `;
     const products = await db.query(dataQuery, params);
 
+    // Helper function to parse PostgreSQL array
+    const parsePostgresArray = (value: string | string[] | null): string[] => {
+      if (!value) return [];
+      if (Array.isArray(value)) return value;
+      // PostgreSQL returns arrays as {item1,item2,...} format
+      if (typeof value === 'string' && value.startsWith('{') && value.endsWith('}')) {
+        const inner = value.slice(1, -1);
+        if (!inner) return [];
+        // Handle quoted strings with commas inside
+        const items: string[] = [];
+        let current = '';
+        let inQuotes = false;
+        for (let i = 0; i < inner.length; i++) {
+          const char = inner[i];
+          if (char === '"' && inner[i - 1] !== '\\') {
+            inQuotes = !inQuotes;
+          } else if (char === ',' && !inQuotes) {
+            items.push(current.replace(/^"|"$/g, ''));
+            current = '';
+          } else {
+            current += char;
+          }
+        }
+        if (current) {
+          items.push(current.replace(/^"|"$/g, ''));
+        }
+        return items;
+      }
+      return [value];
+    };
+
     // Transform data for frontend
     const transformedProducts = products.map((p: {
       id: string;
@@ -157,22 +188,25 @@ export async function GET(request: NextRequest) {
       sizeName: string;
       categoryName: string;
       collectionName: string;
-    }) => ({
-      id: p.id,
-      name: p.name,
-      slug: p.slug,
-      sku: p.sku,
-      description: p.description,
-      images: Array.isArray(p.images) ? p.images : (p.images ? [p.images] : []),
-      thumbnail: p.thumbnail,
-      dimensions: p.dimensions,
-      diameter: p.diameter,
-      material: p.material,
-      color: p.color,
-      size: p.sizeName, // Transform size object to string
-      category: p.categoryName,
-      collection: p.collectionName,
-    }));
+    }) => {
+      const parsedImages = parsePostgresArray(p.images);
+      return {
+        id: p.id,
+        name: p.name,
+        slug: p.slug,
+        sku: p.sku,
+        description: p.description,
+        images: parsedImages,
+        thumbnail: p.thumbnail || parsedImages[0] || null,
+        dimensions: p.dimensions,
+        diameter: p.diameter,
+        material: p.material,
+        color: p.color,
+        size: p.sizeName, // Transform size object to string
+        category: p.categoryName,
+        collection: p.collectionName,
+      };
+    });
 
     return NextResponse.json({
       data: transformedProducts,

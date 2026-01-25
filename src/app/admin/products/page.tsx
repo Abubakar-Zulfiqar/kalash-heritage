@@ -1,8 +1,36 @@
 import Link from "next/link";
 import Image from "next/image";
 import { getDatabase } from "@/lib/db";
-import type { Product } from "@/entities/Product";
 import DeleteProductButton from "./DeleteProductButton";
+
+// Helper function to parse PostgreSQL array
+function parsePostgresArray(value: string | string[] | null): string[] {
+  if (!value) return [];
+  if (Array.isArray(value)) return value;
+  if (typeof value === 'string' && value.startsWith('{') && value.endsWith('}')) {
+    const inner = value.slice(1, -1);
+    if (!inner) return [];
+    const items: string[] = [];
+    let current = '';
+    let inQuotes = false;
+    for (let i = 0; i < inner.length; i++) {
+      const char = inner[i];
+      if (char === '"' && inner[i - 1] !== '\\') {
+        inQuotes = !inQuotes;
+      } else if (char === ',' && !inQuotes) {
+        items.push(current.replace(/^"|"$/g, ''));
+        current = '';
+      } else {
+        current += char;
+      }
+    }
+    if (current) {
+      items.push(current.replace(/^"|"$/g, ''));
+    }
+    return items;
+  }
+  return [value];
+}
 
 async function getProducts() {
   try {
@@ -37,7 +65,7 @@ interface ProductRow {
   name: string;
   sku: string;
   thumbnail?: string;
-  images?: string[];
+  images?: string | string[];
   dimensions?: string;
   material?: string;
   color?: string;
@@ -94,13 +122,15 @@ export default async function ProductsPage() {
               {products.length > 0 ? (
                 products.map((product: ProductRow) => {
                   const collectionName = product.collectionName || product.directCollectionName;
+                  const parsedImages = parsePostgresArray(product.images || null);
+                  const imageUrl = product.thumbnail || parsedImages[0] || "/placeholder-rug.svg";
                   return (
                     <tr key={product.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-4">
                           <div className="relative w-12 h-12 bg-gray-100 rounded overflow-hidden flex-shrink-0">
                             <Image
-                              src={product.thumbnail || (product.images && product.images[0]) || "/placeholder-rug.svg"}
+                              src={imageUrl}
                               alt={product.name}
                               fill
                               className="object-cover"
