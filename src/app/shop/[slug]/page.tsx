@@ -175,7 +175,7 @@ export default function ProductDetailPage() {
                 src={product.images[selectedImage] || "/placeholder-rug.svg"}
                 alt={product.name}
                 fill
-                className="object-cover"
+                className="object-contain"
                 priority
               />
             </motion.div>
@@ -197,7 +197,7 @@ export default function ProductDetailPage() {
                       src={image || "/placeholder-rug.svg"}
                       alt={`${product.name} - ${index + 1}`}
                       fill
-                      className="object-cover"
+                      className="object-contain"
                     />
                   </div>
                 </button>
@@ -403,24 +403,6 @@ export default function ProductDetailPage() {
           </motion.div>
         </div>
 
-        {/* Additional Info Tabs */}
-        <div className="mt-16">
-          <div className="border-t border-gray-200 pt-12">
-            <h2 className="text-2xl font-serif font-bold text-gray-900 mb-6">
-              Care Instructions
-            </h2>
-            <div className="prose max-w-none text-gray-700">
-              <ul className="space-y-2">
-                <li>Vacuum regularly using a suction-only vacuum cleaner</li>
-                <li>Rotate rug periodically to ensure even wear</li>
-                <li>Avoid direct sunlight to prevent fading</li>
-                <li>Clean spills immediately by blotting with a clean cloth</li>
-                <li>Professional cleaning recommended every 1-2 years</li>
-                <li>Use rug pad to prevent slipping and extend rug life</li>
-              </ul>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );
