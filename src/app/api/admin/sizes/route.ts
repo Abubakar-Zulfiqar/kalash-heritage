@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getDatabase } from "@/lib/db";
+import { IsNull } from "typeorm";
 
 export const dynamic = "force-dynamic";
 
@@ -43,15 +44,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Name is required" }, { status: 400 });
     }
 
+    if (!collectionId && !categoryId) {
+      return NextResponse.json({ error: "Either collection or category is required" }, { status: 400 });
+    }
+
     // Auto-generate slug from name
     const slug = name
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/(^-|-$)/g, "");
-
-    if (!collectionId && !categoryId) {
-      return NextResponse.json({ error: "Either collection or category is required" }, { status: 400 });
-    }
 
     const db = await getDatabase();
     const { Size: SizeEntity } = await import("@/entities/Size");
@@ -61,8 +62,10 @@ export async function POST(request: NextRequest) {
     const collectionRepo = db.getRepository(CollectionEntity);
     const categoryRepo = db.getRepository(CategoryEntity);
 
-    // If categoryId is provided, validate it and get its collection
+    let displayOrder = 1;
+
     if (categoryId) {
+      // Validate category exists
       const category = await categoryRepo.findOne({
         where: { id: categoryId },
         relations: ["collection"],
@@ -70,15 +73,21 @@ export async function POST(request: NextRequest) {
       if (!category) {
         return NextResponse.json({ error: "Category not found" }, { status: 404 });
       }
+
       // Check for duplicate slug within the same category
       const existingSlug = await sizeRepo.findOne({
         where: { slug, categoryId },
       });
       if (existingSlug) {
-        return NextResponse.json({ error: "A size with this slug already exists in this category" }, { status: 400 });
+        return NextResponse.json({ error: "A size with this name already exists in this category" }, { status: 400 });
       }
+
+      // Calculate displayOrder
+      const count = await sizeRepo.count({ where: { categoryId } });
+      displayOrder = count + 1;
+
     } else if (collectionId) {
-      // Validate collection exists and doesn't have categories
+      // Validate collection exists
       const collection = await collectionRepo.findOne({ where: { id: collectionId } });
       if (!collection) {
         return NextResponse.json({ error: "Collection not found" }, { status: 404 });
@@ -86,28 +95,18 @@ export async function POST(request: NextRequest) {
       if (collection.hasCategories) {
         return NextResponse.json({ error: "This collection has categories. Please select a category instead." }, { status: 400 });
       }
-      // Check for duplicate slug within the same collection
+
+      // Check for duplicate slug within the same collection (where categoryId is null)
       const existingSlug = await sizeRepo.findOne({
-        where: { slug, collectionId, categoryId: null as unknown as undefined },
+        where: { slug, collectionId, categoryId: IsNull() },
       });
       if (existingSlug) {
-        return NextResponse.json({ error: "A size with this slug already exists in this collection" }, { status: 400 });
+        return NextResponse.json({ error: "A size with this name already exists in this collection" }, { status: 400 });
       }
-    }
 
-    // Auto-calculate displayOrder (count existing + 1)
-    let displayOrder = 1;
-    try {
-      if (categoryId) {
-        const count = await sizeRepo.count({ where: { categoryId } });
-        displayOrder = count + 1;
-      } else if (collectionId) {
-        const existingSizes = await sizeRepo.find({ where: { collectionId } });
-        const sizesWithoutCategory = existingSizes.filter((s: { categoryId?: string | null }) => !s.categoryId);
-        displayOrder = sizesWithoutCategory.length + 1;
-      }
-    } catch {
-      displayOrder = 1;
+      // Calculate displayOrder
+      const count = await sizeRepo.count({ where: { collectionId, categoryId: IsNull() } });
+      displayOrder = count + 1;
     }
 
     const size = sizeRepo.create({
