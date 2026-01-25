@@ -20,16 +20,17 @@ export async function PUT(
     const data = await request.json();
 
     const db = await getDatabase();
-    const { Product: ProductEntity } = await import("@/entities/Product");
-    const productRepo = db.getRepository(ProductEntity);
 
-    const product = await productRepo.findOne({ where: { id } });
-
-    if (!product) {
+    // Check if product exists
+    const existingProduct = await db.query(
+      `SELECT id FROM products WHERE id = $1 AND "deletedAt" IS NULL`,
+      [id]
+    );
+    if (!existingProduct || existingProduct.length === 0) {
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
     }
 
-    // Check for duplicate SKU (excluding current product) using raw query
+    // Check for duplicate SKU (excluding current product)
     const existingSkuResult = await db.query(
       `SELECT id FROM products WHERE sku = $1 AND id != $2 AND "deletedAt" IS NULL`,
       [data.sku, id]
@@ -40,33 +41,56 @@ export async function PUT(
 
     // Validate sizeId if provided
     if (data.sizeId) {
-      const { Size: SizeEntity } = await import("@/entities/Size");
-      const sizeRepo = db.getRepository(SizeEntity);
-      const size = await sizeRepo.findOne({ where: { id: data.sizeId } });
-      if (!size) {
+      const sizeResult = await db.query(
+        `SELECT id FROM sizes WHERE id = $1`,
+        [data.sizeId]
+      );
+      if (!sizeResult || sizeResult.length === 0) {
         return NextResponse.json({ error: "Size not found" }, { status: 404 });
       }
     }
 
-    // Update product (keeping existing price/stock values, removing style/origin/pattern)
-    await productRepo.update(id, {
-      name: data.name,
-      sku: data.sku,
-      description: data.description,
-      sizeId: data.sizeId || null,
-      dimensions: data.dimensions || null,
-      diameter: data.diameter || null,
-      material: data.material || null,
-      color: data.color || null,
-      images: data.images || [],
-      thumbnail: data.thumbnail || data.images?.[0] || null,
-      metaTitle: data.metaTitle || null,
-      metaDescription: data.metaDescription || null,
-    });
+    // Convert images array to PostgreSQL array format
+    const imagesArray = data.images && data.images.length > 0
+      ? `{${data.images.map((img: string) => `"${img}"`).join(',')}}`
+      : '{}';
 
-    const updatedProduct = await productRepo.findOne({ where: { id } });
+    // Update product using raw query
+    const updateResult = await db.query(
+      `UPDATE products SET
+        name = $1,
+        sku = $2,
+        description = $3,
+        "sizeId" = $4,
+        dimensions = $5,
+        diameter = $6,
+        material = $7,
+        color = $8,
+        images = $9,
+        thumbnail = $10,
+        "metaTitle" = $11,
+        "metaDescription" = $12,
+        "updatedAt" = NOW()
+      WHERE id = $13
+      RETURNING *`,
+      [
+        data.name,
+        data.sku,
+        data.description || '',
+        data.sizeId || null,
+        data.dimensions || null,
+        data.diameter || null,
+        data.material || null,
+        data.color || null,
+        imagesArray,
+        data.thumbnail || data.images?.[0] || null,
+        data.metaTitle || null,
+        data.metaDescription || null,
+        id,
+      ]
+    );
 
-    return NextResponse.json(updatedProduct);
+    return NextResponse.json(updateResult[0]);
   } catch (error) {
     console.error("Error updating product:", error);
     return NextResponse.json({ error: "Failed to update product" }, { status: 500 });
@@ -87,17 +111,21 @@ export async function DELETE(
     const { id } = await params;
 
     const db = await getDatabase();
-    const { Product: ProductEntity } = await import("@/entities/Product");
-    const productRepo = db.getRepository(ProductEntity);
 
-    const product = await productRepo.findOne({ where: { id } });
-
-    if (!product) {
+    // Check if product exists
+    const existingProduct = await db.query(
+      `SELECT id FROM products WHERE id = $1 AND "deletedAt" IS NULL`,
+      [id]
+    );
+    if (!existingProduct || existingProduct.length === 0) {
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
     }
 
     // Soft delete the product
-    await productRepo.softDelete(id);
+    await db.query(
+      `UPDATE products SET "deletedAt" = NOW() WHERE id = $1`,
+      [id]
+    );
 
     return NextResponse.json({ success: true });
   } catch (error) {

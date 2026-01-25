@@ -19,6 +19,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Product name is required" }, { status: 400 });
     }
 
+    if (!data.sku) {
+      return NextResponse.json({ error: "SKU is required" }, { status: 400 });
+    }
+
     // Auto-generate slug from name
     const slug = data.name
       .toLowerCase()
@@ -26,54 +30,84 @@ export async function POST(request: NextRequest) {
       .replace(/(^-|-$)/g, "");
 
     const db = await getDatabase();
-    const { Product: ProductEntity } = await import("@/entities/Product");
-    const productRepo = db.getRepository(ProductEntity);
 
-    // Check for duplicate slug or SKU
-    const existingSlug = await productRepo.findOne({ where: { slug } });
-    if (existingSlug) {
+    // Check for duplicate slug using raw query
+    const existingSlugResult = await db.query(
+      `SELECT id FROM products WHERE slug = $1 AND "deletedAt" IS NULL`,
+      [slug]
+    );
+    if (existingSlugResult && existingSlugResult.length > 0) {
       return NextResponse.json({ error: "A product with this name already exists" }, { status: 400 });
     }
 
-    const existingSku = await productRepo.findOne({ where: { sku: data.sku } });
-    if (existingSku) {
+    // Check for duplicate SKU using raw query
+    const existingSkuResult = await db.query(
+      `SELECT id FROM products WHERE sku = $1 AND "deletedAt" IS NULL`,
+      [data.sku]
+    );
+    if (existingSkuResult && existingSkuResult.length > 0) {
       return NextResponse.json({ error: "A product with this SKU already exists" }, { status: 400 });
     }
 
-    // Validate sizeId if provided
+    // Validate sizeId if provided using raw query
     if (data.sizeId) {
-      const { Size: SizeEntity } = await import("@/entities/Size");
-      const sizeRepo = db.getRepository(SizeEntity);
-      const size = await sizeRepo.findOne({ where: { id: data.sizeId } });
-      if (!size) {
+      const sizeResult = await db.query(
+        `SELECT id FROM sizes WHERE id = $1`,
+        [data.sizeId]
+      );
+      if (!sizeResult || sizeResult.length === 0) {
         return NextResponse.json({ error: "Size not found" }, { status: 404 });
       }
     }
 
-    const product = productRepo.create({
-      name: data.name,
-      slug,
-      sku: data.sku,
-      description: data.description,
-      price: 0, // Default price for showcase-only mode
-      salePrice: null,
-      sizeId: data.sizeId || null,
-      dimensions: data.dimensions || null,
-      diameter: data.diameter || null,
-      material: data.material || null,
-      color: data.color || null,
-      stock: 0, // Default stock for showcase-only mode
-      inStock: true,
-      featured: false,
-      images: data.images || [],
-      thumbnail: data.thumbnail || data.images?.[0] || null,
-      metaTitle: data.metaTitle || null,
-      metaDescription: data.metaDescription || null,
-    });
+    // Convert images array to PostgreSQL array format
+    const imagesArray = data.images && data.images.length > 0
+      ? `{${data.images.map((img: string) => `"${img}"`).join(',')}}`
+      : '{}';
 
-    const savedProduct = await productRepo.save(product);
+    // Insert the new product using raw query
+    const insertResult = await db.query(
+      `INSERT INTO products (
+        id, name, slug, sku, description, price, "salePrice", currency,
+        dimensions, diameter, material, color,
+        stock, "inStock", featured,
+        images, thumbnail,
+        "metaTitle", "metaDescription",
+        "sizeId", "createdAt", "updatedAt"
+      )
+      VALUES (
+        gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7,
+        $8, $9, $10, $11,
+        $12, $13, $14,
+        $15, $16,
+        $17, $18,
+        $19, NOW(), NOW()
+      )
+      RETURNING *`,
+      [
+        data.name,
+        slug,
+        data.sku,
+        data.description || '',
+        0, // price - default for showcase mode
+        null, // salePrice
+        'USD', // currency
+        data.dimensions || null,
+        data.diameter || null,
+        data.material || null,
+        data.color || null,
+        0, // stock - default for showcase mode
+        true, // inStock
+        false, // featured
+        imagesArray,
+        data.thumbnail || data.images?.[0] || null,
+        data.metaTitle || null,
+        data.metaDescription || null,
+        data.sizeId || null,
+      ]
+    );
 
-    return NextResponse.json(savedProduct, { status: 201 });
+    return NextResponse.json(insertResult[0], { status: 201 });
   } catch (error) {
     console.error("Error creating product:", error);
     return NextResponse.json({ error: "Failed to create product" }, { status: 500 });
