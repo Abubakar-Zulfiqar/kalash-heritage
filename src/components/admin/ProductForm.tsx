@@ -46,23 +46,6 @@ interface ProductFormProps {
   };
 }
 
-// Function to calculate diameter from dimensions
-function calculateDiameter(dimensions: string): string {
-  if (!dimensions) return "";
-
-  // Parse dimensions like "280cm x 175cm", "280 x 175", "280cm X 175cm", etc.
-  const match = dimensions.match(/(\d+(?:\.\d+)?)\s*(?:cm)?\s*[xX×]\s*(\d+(?:\.\d+)?)\s*(?:cm)?/i);
-
-  if (match) {
-    const width = parseFloat(match[1]);
-    const height = parseFloat(match[2]);
-    const diagonal = Math.sqrt(width * width + height * height);
-    return `${Math.round(diagonal)}cm`;
-  }
-
-  return "";
-}
-
 export default function ProductForm({ collections, categories, sizes, initialData }: ProductFormProps) {
   const router = useRouter();
   const isEditing = !!initialData?.id;
@@ -144,24 +127,6 @@ export default function ProductForm({ collections, categories, sizes, initialDat
       setFormData(prev => ({ ...prev, sizeId: "" }));
     }
   }, [selectedCategoryId, selectedCollection?.hasCategories, isEditing]);
-
-  // Auto-calculate diameter when dimensions change
-  useEffect(() => {
-    const calculatedDiameter = calculateDiameter(formData.dimensions);
-    if (calculatedDiameter && !formData.diameter) {
-      setFormData(prev => ({ ...prev, diameter: calculatedDiameter }));
-    }
-  }, [formData.dimensions, formData.diameter]);
-
-  // Handle dimensions change with auto-diameter calculation
-  const handleDimensionsChange = (value: string) => {
-    const calculatedDiameter = calculateDiameter(value);
-    setFormData(prev => ({
-      ...prev,
-      dimensions: value,
-      diameter: calculatedDiameter || prev.diameter,
-    }));
-  };
 
   const handleFileUpload = async (files: FileList | File[]) => {
     const fileArray = Array.from(files);
@@ -443,22 +408,19 @@ export default function ProductForm({ collections, categories, sizes, initialDat
             <input
               type="text"
               value={formData.dimensions}
-              onChange={(e) => handleDimensionsChange(e.target.value)}
+              onChange={(e) => setFormData((prev) => ({ ...prev, dimensions: e.target.value }))}
               placeholder="e.g., 280cm x 175cm"
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Diameter
-              <span className="text-xs text-gray-400 ml-1">(auto-calculated)</span>
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Diameter</label>
             <input
               type="text"
               value={formData.diameter}
               onChange={(e) => setFormData((prev) => ({ ...prev, diameter: e.target.value }))}
-              placeholder="Auto-calculated from dimensions"
+              placeholder="e.g., 330cm"
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             />
           </div>
