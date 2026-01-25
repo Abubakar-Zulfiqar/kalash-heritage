@@ -72,13 +72,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "A category with this name already exists in this collection" }, { status: 400 });
     }
 
-    // Auto-calculate displayOrder (get max + 1 within the collection)
-    const maxOrderResult = await categoryRepo
-      .createQueryBuilder("category")
-      .select("MAX(category.displayOrder)", "maxOrder")
-      .where("category.collectionId = :collectionId", { collectionId })
-      .getRawOne();
-    const displayOrder = (maxOrderResult?.maxOrder || 0) + 1;
+    // Auto-calculate displayOrder (count existing + 1 within the collection)
+    const count = await categoryRepo.count({ where: { collectionId } });
+    const displayOrder = count + 1;
 
     const category = categoryRepo.create({
       name,

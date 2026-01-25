@@ -57,12 +57,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "A collection with this name already exists" }, { status: 400 });
     }
 
-    // Auto-calculate displayOrder (get max + 1)
-    const maxOrderResult = await collectionRepo
-      .createQueryBuilder("collection")
-      .select("MAX(collection.displayOrder)", "maxOrder")
-      .getRawOne();
-    const displayOrder = (maxOrderResult?.maxOrder || 0) + 1;
+    // Auto-calculate displayOrder (count existing + 1)
+    const count = await collectionRepo.count();
+    const displayOrder = count + 1;
 
     const collection = collectionRepo.create({
       name,

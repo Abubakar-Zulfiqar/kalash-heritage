@@ -95,22 +95,19 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Auto-calculate displayOrder (get max + 1)
-    let displayOrder = 0;
-    if (categoryId) {
-      const maxOrderResult = await sizeRepo
-        .createQueryBuilder("size")
-        .select("MAX(size.displayOrder)", "maxOrder")
-        .where("size.categoryId = :categoryId", { categoryId })
-        .getRawOne();
-      displayOrder = (maxOrderResult?.maxOrder || 0) + 1;
-    } else if (collectionId) {
-      const maxOrderResult = await sizeRepo
-        .createQueryBuilder("size")
-        .select("MAX(size.displayOrder)", "maxOrder")
-        .where("size.collectionId = :collectionId AND size.categoryId IS NULL", { collectionId })
-        .getRawOne();
-      displayOrder = (maxOrderResult?.maxOrder || 0) + 1;
+    // Auto-calculate displayOrder (count existing + 1)
+    let displayOrder = 1;
+    try {
+      if (categoryId) {
+        const count = await sizeRepo.count({ where: { categoryId } });
+        displayOrder = count + 1;
+      } else if (collectionId) {
+        const existingSizes = await sizeRepo.find({ where: { collectionId } });
+        const sizesWithoutCategory = existingSizes.filter(s => !s.categoryId);
+        displayOrder = sizesWithoutCategory.length + 1;
+      }
+    } catch {
+      displayOrder = 1;
     }
 
     const size = sizeRepo.create({
