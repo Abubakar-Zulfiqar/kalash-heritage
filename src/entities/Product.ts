@@ -41,6 +41,9 @@ export class Product {
   dimensions?: string; // e.g., "280cm x 175cm"
 
   @Column({ nullable: true })
+  diameter?: string; // Calculated from dimensions or manually entered
+
+  @Column({ nullable: true })
   material?: string; // e.g., "Wool", "Silk", "Cotton"
 
   @Column({ nullable: true })

@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getDatabase } from "@/lib/db";
-import { Not } from "typeorm";
 
 export const dynamic = "force-dynamic";
 
@@ -30,19 +29,12 @@ export async function PUT(
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
     }
 
-    // Check for duplicate slug (excluding current product)
-    const existingSlug = await productRepo.findOne({
-      where: { slug: data.slug, id: Not(id) },
-    });
-    if (existingSlug) {
-      return NextResponse.json({ error: "A product with this slug already exists" }, { status: 400 });
-    }
-
-    // Check for duplicate SKU (excluding current product)
-    const existingSku = await productRepo.findOne({
-      where: { sku: data.sku, id: Not(id) },
-    });
-    if (existingSku) {
+    // Check for duplicate SKU (excluding current product) using raw query
+    const existingSkuResult = await db.query(
+      `SELECT id FROM products WHERE sku = $1 AND id != $2 AND "deletedAt" IS NULL`,
+      [data.sku, id]
+    );
+    if (existingSkuResult && existingSkuResult.length > 0) {
       return NextResponse.json({ error: "A product with this SKU already exists" }, { status: 400 });
     }
 
@@ -56,24 +48,16 @@ export async function PUT(
       }
     }
 
-    // Update product
+    // Update product (keeping existing price/stock values, removing style/origin/pattern)
     await productRepo.update(id, {
       name: data.name,
-      slug: data.slug,
       sku: data.sku,
       description: data.description,
-      price: data.price,
-      salePrice: data.salePrice || null,
       sizeId: data.sizeId || null,
       dimensions: data.dimensions || null,
+      diameter: data.diameter || null,
       material: data.material || null,
       color: data.color || null,
-      style: data.style || null,
-      origin: data.origin || null,
-      pattern: data.pattern || null,
-      stock: data.stock,
-      inStock: data.inStock,
-      featured: data.featured,
       images: data.images || [],
       thumbnail: data.thumbnail || data.images?.[0] || null,
       metaTitle: data.metaTitle || null,

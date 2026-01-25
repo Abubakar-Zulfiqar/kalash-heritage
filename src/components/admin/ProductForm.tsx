@@ -34,23 +34,33 @@ interface ProductFormProps {
     slug: string;
     sku: string;
     description: string;
-    price: number;
-    salePrice?: number;
     sizeId?: string;
     dimensions?: string;
+    diameter?: string;
     material?: string;
     color?: string;
-    style?: string;
-    origin?: string;
-    pattern?: string;
-    stock: number;
-    inStock: boolean;
-    featured: boolean;
     images: string[];
     thumbnail?: string;
     metaTitle?: string;
     metaDescription?: string;
   };
+}
+
+// Function to calculate diameter from dimensions
+function calculateDiameter(dimensions: string): string {
+  if (!dimensions) return "";
+
+  // Parse dimensions like "280cm x 175cm", "280 x 175", "280cm X 175cm", etc.
+  const match = dimensions.match(/(\d+(?:\.\d+)?)\s*(?:cm)?\s*[xX×]\s*(\d+(?:\.\d+)?)\s*(?:cm)?/i);
+
+  if (match) {
+    const width = parseFloat(match[1]);
+    const height = parseFloat(match[2]);
+    const diagonal = Math.sqrt(width * width + height * height);
+    return `${Math.round(diagonal)}cm`;
+  }
+
+  return "";
 }
 
 export default function ProductForm({ collections, categories, sizes, initialData }: ProductFormProps) {
@@ -88,18 +98,11 @@ export default function ProductForm({ collections, categories, sizes, initialDat
     name: initialData?.name || "",
     sku: initialData?.sku || "",
     description: initialData?.description || "",
-    price: initialData?.price || 0,
-    salePrice: initialData?.salePrice || "",
     sizeId: initialData?.sizeId || "",
     dimensions: initialData?.dimensions || "",
+    diameter: initialData?.diameter || "",
     material: initialData?.material || "",
     color: initialData?.color || "",
-    style: initialData?.style || "",
-    origin: initialData?.origin || "",
-    pattern: initialData?.pattern || "",
-    stock: initialData?.stock || 0,
-    inStock: initialData?.inStock ?? true,
-    featured: initialData?.featured || false,
     images: initialData?.images || [],
     thumbnail: initialData?.thumbnail || "",
     metaTitle: initialData?.metaTitle || "",
@@ -141,6 +144,24 @@ export default function ProductForm({ collections, categories, sizes, initialDat
       setFormData(prev => ({ ...prev, sizeId: "" }));
     }
   }, [selectedCategoryId, selectedCollection?.hasCategories, isEditing]);
+
+  // Auto-calculate diameter when dimensions change
+  useEffect(() => {
+    const calculatedDiameter = calculateDiameter(formData.dimensions);
+    if (calculatedDiameter && !formData.diameter) {
+      setFormData(prev => ({ ...prev, diameter: calculatedDiameter }));
+    }
+  }, [formData.dimensions, formData.diameter]);
+
+  // Handle dimensions change with auto-diameter calculation
+  const handleDimensionsChange = (value: string) => {
+    const calculatedDiameter = calculateDiameter(value);
+    setFormData(prev => ({
+      ...prev,
+      dimensions: value,
+      diameter: calculatedDiameter || prev.diameter,
+    }));
+  };
 
   const handleFileUpload = async (files: FileList | File[]) => {
     const fileArray = Array.from(files);
@@ -275,12 +296,7 @@ export default function ProductForm({ collections, categories, sizes, initialDat
       const response = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...formData,
-          price: Number(formData.price),
-          salePrice: formData.salePrice ? Number(formData.salePrice) : null,
-          stock: Number(formData.stock),
-        }),
+        body: JSON.stringify(formData),
       });
 
       if (!response.ok) {
@@ -418,88 +434,31 @@ export default function ProductForm({ collections, categories, sizes, initialDat
         </div>
       </div>
 
-      {/* Pricing & Stock */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Pricing & Stock</h2>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Price (USD) *
-            </label>
-            <input
-              type="number"
-              value={formData.price}
-              onChange={(e) => setFormData((prev) => ({ ...prev, price: Number(e.target.value) }))}
-              required
-              min="0"
-              step="0.01"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Sale Price (USD)
-            </label>
-            <input
-              type="number"
-              value={formData.salePrice}
-              onChange={(e) => setFormData((prev) => ({ ...prev, salePrice: e.target.value }))}
-              min="0"
-              step="0.01"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Stock *
-            </label>
-            <input
-              type="number"
-              value={formData.stock}
-              onChange={(e) => setFormData((prev) => ({ ...prev, stock: Number(e.target.value) }))}
-              required
-              min="0"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-            />
-          </div>
-
-          <div className="flex items-center gap-6 pt-6">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={formData.inStock}
-                onChange={(e) => setFormData((prev) => ({ ...prev, inStock: e.target.checked }))}
-                className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
-              />
-              <span className="text-sm text-gray-700">In Stock</span>
-            </label>
-
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={formData.featured}
-                onChange={(e) => setFormData((prev) => ({ ...prev, featured: e.target.checked }))}
-                className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
-              />
-              <span className="text-sm text-gray-700">Featured</span>
-            </label>
-          </div>
-        </div>
-      </div>
-
       {/* Specifications */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Specifications</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Dimensions</label>
             <input
               type="text"
               value={formData.dimensions}
-              onChange={(e) => setFormData((prev) => ({ ...prev, dimensions: e.target.value }))}
+              onChange={(e) => handleDimensionsChange(e.target.value)}
               placeholder="e.g., 280cm x 175cm"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Diameter
+              <span className="text-xs text-gray-400 ml-1">(auto-calculated)</span>
+            </label>
+            <input
+              type="text"
+              value={formData.diameter}
+              onChange={(e) => setFormData((prev) => ({ ...prev, diameter: e.target.value }))}
+              placeholder="Auto-calculated from dimensions"
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             />
           </div>
@@ -522,39 +481,6 @@ export default function ProductForm({ collections, categories, sizes, initialDat
               value={formData.color}
               onChange={(e) => setFormData((prev) => ({ ...prev, color: e.target.value }))}
               placeholder="e.g., Red, Blue"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Style</label>
-            <input
-              type="text"
-              value={formData.style}
-              onChange={(e) => setFormData((prev) => ({ ...prev, style: e.target.value }))}
-              placeholder="e.g., Oriental, Modern"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Pattern</label>
-            <input
-              type="text"
-              value={formData.pattern}
-              onChange={(e) => setFormData((prev) => ({ ...prev, pattern: e.target.value }))}
-              placeholder="e.g., Floral, Geometric"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Origin</label>
-            <input
-              type="text"
-              value={formData.origin}
-              onChange={(e) => setFormData((prev) => ({ ...prev, origin: e.target.value }))}
-              placeholder="e.g., Pakistan, Afghanistan"
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             />
           </div>
