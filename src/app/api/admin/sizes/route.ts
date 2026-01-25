@@ -103,7 +103,7 @@ export async function POST(request: NextRequest) {
         displayOrder = count + 1;
       } else if (collectionId) {
         const existingSizes = await sizeRepo.find({ where: { collectionId } });
-        const sizesWithoutCategory = existingSizes.filter(s => !s.categoryId);
+        const sizesWithoutCategory = existingSizes.filter((s: { categoryId?: string | null }) => !s.categoryId);
         displayOrder = sizesWithoutCategory.length + 1;
       }
     } catch {
