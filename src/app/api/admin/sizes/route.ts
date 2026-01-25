@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getDatabase } from "@/lib/db";
-import { IsNull } from "typeorm";
 
 export const dynamic = "force-dynamic";
 
@@ -96,17 +95,17 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: "This collection has categories. Please select a category instead." }, { status: 400 });
       }
 
-      // Check for duplicate slug within the same collection (where categoryId is null)
-      const existingSlug = await sizeRepo.findOne({
-        where: { slug, collectionId, categoryId: IsNull() },
-      });
+      // Check for duplicate slug within the same collection
+      // Get all sizes for this collection and filter in code
+      const existingSizes = await sizeRepo.find({ where: { collectionId } });
+      const existingSlug = existingSizes.find((s: { slug: string; categoryId?: string | null }) => s.slug === slug && !s.categoryId);
       if (existingSlug) {
         return NextResponse.json({ error: "A size with this name already exists in this collection" }, { status: 400 });
       }
 
-      // Calculate displayOrder
-      const count = await sizeRepo.count({ where: { collectionId, categoryId: IsNull() } });
-      displayOrder = count + 1;
+      // Calculate displayOrder - count sizes without category
+      const sizesWithoutCategory = existingSizes.filter((s: { categoryId?: string | null }) => !s.categoryId);
+      displayOrder = sizesWithoutCategory.length + 1;
     }
 
     const size = sizeRepo.create({
