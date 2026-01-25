@@ -86,7 +86,6 @@ export default function ProductForm({ collections, categories, sizes, initialDat
 
   const [formData, setFormData] = useState({
     name: initialData?.name || "",
-    slug: initialData?.slug || "",
     sku: initialData?.sku || "",
     description: initialData?.description || "",
     price: initialData?.price || 0,
@@ -111,7 +110,6 @@ export default function ProductForm({ collections, categories, sizes, initialDat
   const [isUploading, setIsUploading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [newImageUrl, setNewImageUrl] = useState("");
-  const [slugManuallyEdited, setSlugManuallyEdited] = useState(isEditing);
 
   // Get the selected collection
   const selectedCollection = collections.find(c => c.id === selectedCollectionId);
@@ -143,33 +141,6 @@ export default function ProductForm({ collections, categories, sizes, initialDat
       setFormData(prev => ({ ...prev, sizeId: "" }));
     }
   }, [selectedCategoryId, selectedCollection?.hasCategories, isEditing]);
-
-  const generateSlug = (name: string) => {
-    return name
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/(^-|-$)/g, "");
-  };
-
-  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const name = e.target.value;
-    setFormData((prev) => ({
-      ...prev,
-      name,
-      // Auto-generate slug unless user has manually edited it
-      slug: slugManuallyEdited ? prev.slug : generateSlug(name),
-    }));
-  };
-
-  const handleSlugChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSlugManuallyEdited(true);
-    setFormData((prev) => ({ ...prev, slug: e.target.value }));
-  };
-
-  const handleRegenerateSlug = () => {
-    setSlugManuallyEdited(false);
-    setFormData((prev) => ({ ...prev, slug: generateSlug(prev.name) }));
-  };
 
   const handleFileUpload = async (files: FileList | File[]) => {
     const fileArray = Array.from(files);
@@ -340,37 +311,10 @@ export default function ProductForm({ collections, categories, sizes, initialDat
             <input
               type="text"
               value={formData.name}
-              onChange={handleNameChange}
+              onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
               required
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Slug * {!slugManuallyEdited && <span className="text-xs text-green-600">(auto-generated)</span>}
-            </label>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={formData.slug}
-                onChange={handleSlugChange}
-                required
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-              />
-              {slugManuallyEdited && (
-                <button
-                  type="button"
-                  onClick={handleRegenerateSlug}
-                  title="Regenerate from name"
-                  className="px-3 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                  </svg>
-                </button>
-              )}
-            </div>
           </div>
 
           <div>

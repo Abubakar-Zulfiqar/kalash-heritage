@@ -49,10 +49,8 @@ export default function SizeForm({ collections, categories, initialData }: SizeF
   const [selectedCollectionId, setSelectedCollectionId] = useState(getInitialCollectionId());
   const [formData, setFormData] = useState({
     name: initialData?.name || "",
-    slug: initialData?.slug || "",
     description: initialData?.description || "",
     image: initialData?.image || "",
-    displayOrder: initialData?.displayOrder || 0,
     categoryId: initialData?.categoryId || "",
   });
 
@@ -73,21 +71,6 @@ export default function SizeForm({ collections, categories, initialData }: SizeF
     }
   }, [selectedCollectionId, selectedCollection]);
 
-  const generateSlug = (name: string) => {
-    return name
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/(^-|-$)/g, "");
-  };
-
-  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const name = e.target.value;
-    setFormData((prev) => ({
-      ...prev,
-      name,
-      slug: prev.slug || generateSlug(name),
-    }));
-  };
 
   const handleFileUpload = async (file: File) => {
     if (!file) return;
@@ -187,10 +170,8 @@ export default function SizeForm({ collections, categories, initialData }: SizeF
 
       const payload = {
         name: formData.name,
-        slug: formData.slug,
         description: formData.description,
         image: formData.image,
-        displayOrder: formData.displayOrder,
         ...(selectedCollection?.hasCategories
           ? { categoryId: formData.categoryId }
           : { collectionId: selectedCollectionId }),
@@ -274,36 +255,9 @@ export default function SizeForm({ collections, categories, initialData }: SizeF
             <input
               type="text"
               value={formData.name}
-              onChange={handleNameChange}
+              onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
               required
               placeholder="e.g., 2.3 X 3 ft"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Slug *
-            </label>
-            <input
-              type="text"
-              value={formData.slug}
-              onChange={(e) => setFormData((prev) => ({ ...prev, slug: e.target.value }))}
-              required
-              placeholder="e.g., 2-3-x-3-ft"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Display Order
-            </label>
-            <input
-              type="number"
-              value={formData.displayOrder}
-              onChange={(e) => setFormData((prev) => ({ ...prev, displayOrder: Number(e.target.value) }))}
-              min="0"
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             />
           </div>

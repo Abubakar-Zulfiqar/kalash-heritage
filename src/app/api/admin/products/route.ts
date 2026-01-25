@@ -15,14 +15,24 @@ export async function POST(request: NextRequest) {
 
     const data = await request.json();
 
+    if (!data.name) {
+      return NextResponse.json({ error: "Product name is required" }, { status: 400 });
+    }
+
+    // Auto-generate slug from name
+    const slug = data.name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "");
+
     const db = await getDatabase();
     const { Product: ProductEntity } = await import("@/entities/Product");
     const productRepo = db.getRepository(ProductEntity);
 
     // Check for duplicate slug or SKU
-    const existingSlug = await productRepo.findOne({ where: { slug: data.slug } });
+    const existingSlug = await productRepo.findOne({ where: { slug } });
     if (existingSlug) {
-      return NextResponse.json({ error: "A product with this slug already exists" }, { status: 400 });
+      return NextResponse.json({ error: "A product with this name already exists" }, { status: 400 });
     }
 
     const existingSku = await productRepo.findOne({ where: { sku: data.sku } });
@@ -42,7 +52,7 @@ export async function POST(request: NextRequest) {
 
     const product = productRepo.create({
       name: data.name,
-      slug: data.slug,
+      slug,
       sku: data.sku,
       description: data.description,
       price: data.price,

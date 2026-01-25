@@ -37,11 +37,17 @@ export async function POST(request: NextRequest) {
     }
 
     const data = await request.json();
-    const { name, slug, description, image, displayOrder, collectionId } = data;
+    const { name, description, image, collectionId } = data;
 
-    if (!name || !slug || !collectionId) {
-      return NextResponse.json({ error: "Name, slug, and collection are required" }, { status: 400 });
+    if (!name || !collectionId) {
+      return NextResponse.json({ error: "Name and collection are required" }, { status: 400 });
     }
+
+    // Auto-generate slug from name
+    const slug = name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "");
 
     const db = await getDatabase();
     const { Category: CategoryEntity } = await import("@/entities/Category");
@@ -63,15 +69,23 @@ export async function POST(request: NextRequest) {
       where: { slug, collectionId },
     });
     if (existingSlug) {
-      return NextResponse.json({ error: "A category with this slug already exists in this collection" }, { status: 400 });
+      return NextResponse.json({ error: "A category with this name already exists in this collection" }, { status: 400 });
     }
+
+    // Auto-calculate displayOrder (get max + 1 within the collection)
+    const maxOrderResult = await categoryRepo
+      .createQueryBuilder("category")
+      .select("MAX(category.displayOrder)", "maxOrder")
+      .where("category.collectionId = :collectionId", { collectionId })
+      .getRawOne();
+    const displayOrder = (maxOrderResult?.maxOrder || 0) + 1;
 
     const category = categoryRepo.create({
       name,
       slug,
       description: description || null,
       image: image || null,
-      displayOrder: displayOrder || 0,
+      displayOrder,
       collectionId,
     });
 

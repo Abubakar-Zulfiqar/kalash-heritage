@@ -23,31 +23,14 @@ export default function CollectionForm({ initialData }: CollectionFormProps) {
 
   const [formData, setFormData] = useState({
     name: initialData?.name || "",
-    slug: initialData?.slug || "",
     description: initialData?.description || "",
     image: initialData?.image || "",
-    displayOrder: initialData?.displayOrder || 0,
     hasCategories: initialData?.hasCategories || false,
   });
   const [isLoading, setIsLoading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
 
-  const generateSlug = (name: string) => {
-    return name
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-|-$/g, "");
-  };
-
-  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const name = e.target.value;
-    setFormData((prev) => ({
-      ...prev,
-      name,
-      slug: isEditing ? prev.slug : generateSlug(name),
-    }));
-  };
 
   const handleImageUpload = async (file: File) => {
     if (!file.type.startsWith("image/")) {
@@ -149,7 +132,7 @@ export default function CollectionForm({ initialData }: CollectionFormProps) {
             <input
               type="text"
               value={formData.name}
-              onChange={handleNameChange}
+              onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
               required
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               placeholder="e.g., Seljuk"
@@ -157,20 +140,6 @@ export default function CollectionForm({ initialData }: CollectionFormProps) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Slug *
-            </label>
-            <input
-              type="text"
-              value={formData.slug}
-              onChange={(e) => setFormData((prev) => ({ ...prev, slug: e.target.value }))}
-              required
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-              placeholder="e.g., seljuk"
-            />
-          </div>
-
-          <div className="md:col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Description
             </label>
@@ -180,18 +149,6 @@ export default function CollectionForm({ initialData }: CollectionFormProps) {
               rows={3}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               placeholder="Describe this collection..."
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Display Order
-            </label>
-            <input
-              type="number"
-              value={formData.displayOrder}
-              onChange={(e) => setFormData((prev) => ({ ...prev, displayOrder: parseInt(e.target.value) || 0 }))}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             />
           </div>
 

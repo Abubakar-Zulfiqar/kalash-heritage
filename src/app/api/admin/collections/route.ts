@@ -35,11 +35,17 @@ export async function POST(request: NextRequest) {
     }
 
     const data = await request.json();
-    const { name, slug, description, image, displayOrder, hasCategories } = data;
+    const { name, description, image, hasCategories } = data;
 
-    if (!name || !slug) {
-      return NextResponse.json({ error: "Name and slug are required" }, { status: 400 });
+    if (!name) {
+      return NextResponse.json({ error: "Name is required" }, { status: 400 });
     }
+
+    // Auto-generate slug from name
+    const slug = name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "");
 
     const db = await getDatabase();
     const { Collection: CollectionEntity } = await import("@/entities/Collection");
@@ -48,15 +54,22 @@ export async function POST(request: NextRequest) {
     // Check if slug already exists
     const existing = await collectionRepo.findOne({ where: { slug } });
     if (existing) {
-      return NextResponse.json({ error: "A collection with this slug already exists" }, { status: 400 });
+      return NextResponse.json({ error: "A collection with this name already exists" }, { status: 400 });
     }
+
+    // Auto-calculate displayOrder (get max + 1)
+    const maxOrderResult = await collectionRepo
+      .createQueryBuilder("collection")
+      .select("MAX(collection.displayOrder)", "maxOrder")
+      .getRawOne();
+    const displayOrder = (maxOrderResult?.maxOrder || 0) + 1;
 
     const collection = collectionRepo.create({
       name,
       slug,
       description,
       image,
-      displayOrder: displayOrder || 0,
+      displayOrder,
       hasCategories: hasCategories || false,
     });
 

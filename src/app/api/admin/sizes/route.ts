@@ -37,11 +37,17 @@ export async function POST(request: NextRequest) {
     }
 
     const data = await request.json();
-    const { name, slug, description, image, displayOrder, collectionId, categoryId } = data;
+    const { name, description, image, collectionId, categoryId } = data;
 
-    if (!name || !slug) {
-      return NextResponse.json({ error: "Name and slug are required" }, { status: 400 });
+    if (!name) {
+      return NextResponse.json({ error: "Name is required" }, { status: 400 });
     }
+
+    // Auto-generate slug from name
+    const slug = name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "");
 
     if (!collectionId && !categoryId) {
       return NextResponse.json({ error: "Either collection or category is required" }, { status: 400 });
@@ -89,12 +95,30 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Auto-calculate displayOrder (get max + 1)
+    let displayOrder = 0;
+    if (categoryId) {
+      const maxOrderResult = await sizeRepo
+        .createQueryBuilder("size")
+        .select("MAX(size.displayOrder)", "maxOrder")
+        .where("size.categoryId = :categoryId", { categoryId })
+        .getRawOne();
+      displayOrder = (maxOrderResult?.maxOrder || 0) + 1;
+    } else if (collectionId) {
+      const maxOrderResult = await sizeRepo
+        .createQueryBuilder("size")
+        .select("MAX(size.displayOrder)", "maxOrder")
+        .where("size.collectionId = :collectionId AND size.categoryId IS NULL", { collectionId })
+        .getRawOne();
+      displayOrder = (maxOrderResult?.maxOrder || 0) + 1;
+    }
+
     const size = sizeRepo.create({
       name,
       slug,
       description: description || null,
       image: image || null,
-      displayOrder: displayOrder || 0,
+      displayOrder,
       collectionId: categoryId ? null : collectionId,
       categoryId: categoryId || null,
     });
