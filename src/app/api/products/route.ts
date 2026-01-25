@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDatabase } from "@/lib/db";
-import type { Product } from "@/entities/Product";
 
 // Force dynamic rendering to prevent build-time database access
 export const dynamic = 'force-dynamic';
@@ -13,7 +12,7 @@ export async function GET(request: NextRequest) {
     // Pagination
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "12");
-    const skip = (page - 1) * limit;
+    const offset = (page - 1) * limit;
 
     // Filters
     const collection = searchParams.get("collection");
@@ -27,86 +26,156 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get("search");
     const featured = searchParams.get("featured");
     const sortBy = searchParams.get("sortBy") || "createdAt";
-    const sortOrder = (searchParams.get("sortOrder") || "DESC") as "ASC" | "DESC";
+    const sortOrder = (searchParams.get("sortOrder") || "DESC").toUpperCase();
 
     const db = await getDatabase();
-    const { Product: ProductEntity } = await import("@/entities/Product");
-    const productRepository = db.getRepository(ProductEntity);
 
-    // Build query with new hierarchy: Product -> Size -> Category/Collection
-    const queryBuilder = productRepository
-      .createQueryBuilder("product")
-      .leftJoinAndSelect("product.size", "size")
-      .leftJoinAndSelect("size.category", "category")
-      .leftJoinAndSelect("size.collection", "sizeCollection")
-      .leftJoinAndSelect("category.collection", "categoryCollection");
+    // Build WHERE conditions
+    const conditions: string[] = ['p."deletedAt" IS NULL', 'p."inStock" = true'];
+    const params: (string | number | boolean)[] = [];
+    let paramIndex = 1;
 
-    // Filter by collection (either direct on size or through category)
     if (collection) {
-      queryBuilder.andWhere(
-        "(sizeCollection.slug = :collection OR categoryCollection.slug = :collection)",
-        { collection }
-      );
+      conditions.push(`(col.slug = $${paramIndex} OR col2.slug = $${paramIndex})`);
+      params.push(collection);
+      paramIndex++;
     }
 
-    // Filter by category (through size)
     if (category) {
-      queryBuilder.andWhere("category.slug = :category", { category });
+      conditions.push(`c.slug = $${paramIndex}`);
+      params.push(category);
+      paramIndex++;
     }
 
-    // Filter by size slug
     if (sizeSlug) {
-      queryBuilder.andWhere("size.slug = :sizeSlug", { sizeSlug });
+      conditions.push(`s.slug = $${paramIndex}`);
+      params.push(sizeSlug);
+      paramIndex++;
     }
 
     if (minPrice) {
-      queryBuilder.andWhere("product.price >= :minPrice", { minPrice: parseFloat(minPrice) });
+      conditions.push(`p.price >= $${paramIndex}`);
+      params.push(parseFloat(minPrice));
+      paramIndex++;
     }
 
     if (maxPrice) {
-      queryBuilder.andWhere("product.price <= :maxPrice", { maxPrice: parseFloat(maxPrice) });
+      conditions.push(`p.price <= $${paramIndex}`);
+      params.push(parseFloat(maxPrice));
+      paramIndex++;
     }
 
     if (color) {
-      queryBuilder.andWhere("product.color = :color", { color });
+      conditions.push(`p.color = $${paramIndex}`);
+      params.push(color);
+      paramIndex++;
     }
 
     if (style) {
-      queryBuilder.andWhere("product.style = :style", { style });
+      conditions.push(`p.style = $${paramIndex}`);
+      params.push(style);
+      paramIndex++;
     }
 
     if (material) {
-      queryBuilder.andWhere("product.material LIKE :material", { material: `%${material}%` });
+      conditions.push(`p.material ILIKE $${paramIndex}`);
+      params.push(`%${material}%`);
+      paramIndex++;
     }
 
     if (search) {
-      queryBuilder.andWhere(
-        "(product.name LIKE :search OR product.description LIKE :search)",
-        { search: `%${search}%` }
-      );
+      conditions.push(`(p.name ILIKE $${paramIndex} OR p.description ILIKE $${paramIndex})`);
+      params.push(`%${search}%`);
+      paramIndex++;
     }
 
     if (featured === "true") {
-      queryBuilder.andWhere("product.featured = :featured", { featured: true });
+      conditions.push(`p.featured = true`);
     }
 
-    // Exclude soft-deleted products
-    queryBuilder.andWhere("product.deletedAt IS NULL");
-    queryBuilder.andWhere("product.inStock = :inStock", { inStock: true });
+    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
-    // Count total
-    const total = await queryBuilder.getCount();
+    // Validate sortBy to prevent SQL injection
+    const allowedSortColumns = ['createdAt', 'name', 'price'];
+    const safeSortBy = allowedSortColumns.includes(sortBy) ? sortBy : 'createdAt';
+    const safeSortOrder = sortOrder === 'ASC' ? 'ASC' : 'DESC';
 
-    // Apply sorting and pagination
-    queryBuilder
-      .orderBy(`product.${sortBy}`, sortOrder)
-      .skip(skip)
-      .take(limit);
+    // Count query
+    const countQuery = `
+      SELECT COUNT(*) as total
+      FROM products p
+      LEFT JOIN sizes s ON p."sizeId" = s.id
+      LEFT JOIN categories c ON s."categoryId" = c.id
+      LEFT JOIN collections col ON c."collectionId" = col.id
+      LEFT JOIN collections col2 ON s."collectionId" = col2.id
+      ${whereClause}
+    `;
+    const countResult = await db.query(countQuery, params);
+    const total = parseInt(countResult[0]?.total || '0');
 
-    const products = await queryBuilder.getMany();
+    // Data query
+    const dataQuery = `
+      SELECT
+        p.id,
+        p.name,
+        p.slug,
+        p.sku,
+        p.description,
+        p.images,
+        p.thumbnail,
+        p.dimensions,
+        p.diameter,
+        p.material,
+        p.color,
+        s.name as "sizeName",
+        c.name as "categoryName",
+        COALESCE(col.name, col2.name) as "collectionName"
+      FROM products p
+      LEFT JOIN sizes s ON p."sizeId" = s.id
+      LEFT JOIN categories c ON s."categoryId" = c.id
+      LEFT JOIN collections col ON c."collectionId" = col.id
+      LEFT JOIN collections col2 ON s."collectionId" = col2.id
+      ${whereClause}
+      ORDER BY p."${safeSortBy}" ${safeSortOrder}
+      LIMIT ${limit} OFFSET ${offset}
+    `;
+    const products = await db.query(dataQuery, params);
+
+    // Transform data for frontend
+    const transformedProducts = products.map((p: {
+      id: string;
+      name: string;
+      slug: string;
+      sku: string;
+      description: string;
+      images: string | string[];
+      thumbnail: string;
+      dimensions: string;
+      diameter: string;
+      material: string;
+      color: string;
+      sizeName: string;
+      categoryName: string;
+      collectionName: string;
+    }) => ({
+      id: p.id,
+      name: p.name,
+      slug: p.slug,
+      sku: p.sku,
+      description: p.description,
+      images: Array.isArray(p.images) ? p.images : (p.images ? [p.images] : []),
+      thumbnail: p.thumbnail,
+      dimensions: p.dimensions,
+      diameter: p.diameter,
+      material: p.material,
+      color: p.color,
+      size: p.sizeName, // Transform size object to string
+      category: p.categoryName,
+      collection: p.collectionName,
+    }));
 
     return NextResponse.json({
-      data: products,
+      data: transformedProducts,
       total,
       page,
       limit,
