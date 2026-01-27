@@ -77,8 +77,15 @@ export default function ProductForm({ collections, categories, sizes, initialDat
   const [selectedCollectionId, setSelectedCollectionId] = useState(initialSelections.collectionId);
   const [selectedCategoryId, setSelectedCategoryId] = useState(initialSelections.categoryId);
 
-  // Debug: log what images we receive
-  console.log('ProductForm initialData.images:', initialData?.images);
+  // Clean image URLs - strip any quotes, braces from server parsing issues
+  const cleanImageUrls = (urls: string[] | undefined): string[] => {
+    if (!urls || !Array.isArray(urls)) return [];
+    return urls
+      .map(url => url.replace(/^["{]+|["}]+$/g, '').trim())
+      .filter(url => url.startsWith('http'));
+  };
+
+  const cleanedImages = cleanImageUrls(initialData?.images);
 
   const [formData, setFormData] = useState({
     name: initialData?.name || "",
@@ -89,7 +96,7 @@ export default function ProductForm({ collections, categories, sizes, initialDat
     diameter: initialData?.diameter || "",
     material: initialData?.material || "",
     color: initialData?.color || "",
-    images: initialData?.images || [],
+    images: cleanedImages,
     thumbnail: initialData?.thumbnail || "",
     metaTitle: initialData?.metaTitle || "",
     metaDescription: initialData?.metaDescription || "",
