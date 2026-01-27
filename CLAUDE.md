@@ -4,7 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Kalash Heritage is a premium e-commerce platform for a carpet manufacturer in Pakistan. Built with Next.js 16.1 App Router, TypeScript, PostgreSQL, and TypeORM.
+Kalash Heritage is a B2B wholesale showcase platform for a carpet manufacturer in Pakistan. Built with Next.js 16.1 App Router, TypeScript, PostgreSQL, and TypeORM.
+
+**Business Model:** Wholesale/exhibition showcase - customers browse products and submit inquiries (no online checkout/payment). Pricing provided via email within 24-48 hours.
 
 **Live:** https://kalash-heritage.vercel.app
 
@@ -13,8 +15,10 @@ Kalash Heritage is a premium e-commerce platform for a carpet manufacturer in Pa
 - **Framework:** Next.js 16.1 (App Router with Turbopack)
 - **Language:** TypeScript with decorators (`experimentalDecorators: true`)
 - **Styling:** Tailwind CSS v3.4.1 (v4 incompatible with Next.js 16.1)
-- **Database:** PostgreSQL with TypeORM (`synchronize: true` in dev)
+- **Database:** PostgreSQL with TypeORM (`synchronize: true`)
 - **State:** Zustand with persist middleware
+- **Image Storage:** Vercel Blob
+- **Email:** Nodemailer for inquiry notifications
 - **Path Aliases:** `@/*` maps to `src/*`
 
 ## Commands
@@ -35,27 +39,41 @@ npm run seed         # Seed database with sample data
 **Solution:** Type-only imports + lazy require() pattern:
 
 ```typescript
-// ❌ WRONG - Direct import causes circular dependency
+// WRONG - Direct import causes circular dependency
 import { Product } from "./Product";
-@ManyToOne(() => Product, (product) => product.category)
+@ManyToOne(() => Product, (product) => product.size)
 
-// ❌ WRONG - Fails in production (name mangling)
-@ManyToOne("Product", (product) => product.category)
+// WRONG - Fails in production (name mangling)
+@ManyToOne("Product", (product) => product.size)
 
-// ✅ CORRECT - Type import + lazy require
-import type { Product } from "./Product";
-@ManyToOne(() => require("./Product").Product, (product: Product) => product.category)
+// CORRECT - Type import + lazy require
+import type { Size } from "./Size";
+@ManyToOne(() => require("./Size").Size, (size: Size) => size.products)
 ```
 
-**ALL entities follow this pattern.** See `src/entities/Product.ts:89` for reference.
+**ALL entities follow this pattern.** See `src/entities/Product.ts:88` for reference.
 
-### 2. Database Connection Pattern
+### 2. Raw SQL for Complex Queries
+
+Many API routes use raw SQL instead of TypeORM QueryBuilder to avoid cyclic entity import issues:
+
+```typescript
+const result = await db.query(`
+  SELECT p.*, s.name as "sizeName"
+  FROM products p
+  LEFT JOIN sizes s ON p."sizeId" = s.id
+  WHERE p.slug = $1 AND p."deletedAt" IS NULL
+`, [slug]);
+```
+
+PostgreSQL arrays returned as `{item1,item2}` format require parsing - see `parsePostgresArray()` helper in API routes.
+
+### 3. Database Connection Pattern
 
 Database connection lazy-loads and skips during build (`src/lib/db.ts`):
 
 ```typescript
 export async function getDatabase() {
-  // Skip DB connection during Next.js build
   if (process.env.NEXT_PHASE === 'phase-production-build') {
     throw new Error('Database connection skipped during build');
   }
@@ -63,7 +81,7 @@ export async function getDatabase() {
 }
 ```
 
-### 3. Next.js 16 Dynamic Routes
+### 4. Next.js 16 Dynamic Routes
 
 All dynamic routes use async params:
 
@@ -77,31 +95,31 @@ export default async function Page({
 }
 ```
 
-### 4. Zustand State Management
+API routes must declare `export const dynamic = 'force-dynamic';` to prevent build-time DB access.
 
-Client-side stores in `src/store/`:
-- `cartStore.ts` - Shopping cart, persists to `kalash-cart-storage`
-- `currencyStore.ts` - Multi-currency selection (USD, EUR, GBP, PKR, AED, SAR)
-- `checkoutStore.ts` - Checkout flow state (shipping, step)
+### 5. Entity Hierarchy
 
-### 5. Authentication (NextAuth)
+Flexible hierarchy supporting two patterns:
 
-NextAuth with Credentials provider in `src/lib/auth.ts`:
-- Login page: `/login`
-- Admin routes protected via `getServerSession()` check in each API handler
-- Admin user: `admin@kalashheritage.com` / `admin123`
-
-Admin route protection pattern:
-```typescript
-const session = await getServerSession(authOptions);
-if (!session || session.user.role !== "admin") {
-  return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-}
 ```
+Pattern A (hasCategories: true):
+Collection → Category → Size → Product
+
+Pattern B (hasCategories: false):
+Collection → Size → Product (skips Category)
+```
+
+The `Collection.hasCategories` boolean determines which pattern applies.
 
 ## Database
 
-**Entities:** User, Product, Category, Cart, CartItem, Order, OrderItem, ShippingAddress
+**Entities:** User, Product, Collection, Category, Size, Cart, CartItem, Order, OrderItem, ShippingAddress
+
+**Key relationships:**
+- Collection has many Categories OR Sizes (based on `hasCategories`)
+- Category belongs to Collection, has many Sizes
+- Size belongs to Category OR Collection, has many Products
+- Product belongs to Size, has soft delete (`deletedAt`)
 
 **Local setup:**
 ```bash
@@ -111,67 +129,125 @@ npm run seed
 
 **Vercel:** Use Neon PostgreSQL with Custom Prefix "DATABASE" (not "STORAGE").
 
-**Seed script:** Uses `ts-node` with `tsconfig-paths` for `@/*` alias resolution.
+## Zustand State Management
+
+Client-side stores in `src/store/`:
+
+| Store | Purpose | Persistence |
+|-------|---------|-------------|
+| `inquiryStore.ts` | Product inquiry list (main) | `kalash-inquiry-storage` |
+| `cartStore.ts` | Legacy shopping cart | `kalash-cart-storage` |
+| `currencyStore.ts` | Currency selection | `kalash-currency-storage` |
+| `checkoutStore.ts` | Checkout flow state | None (session) |
+
+**Note:** The app now uses `inquiryStore` for B2B workflow. `cartStore` is legacy code.
 
 ## API Routes
 
 ```
-/api/products                  GET (list with filters), POST
-/api/products/[slug]           GET, PUT, DELETE
+# Public
+/api/products                  GET (list with filters)
+/api/products/[slug]           GET (single product)
 /api/categories                GET
+/api/collections               GET (all with relations)
+/api/collections/[slug]        GET (collection with categories/sizes)
+/api/collections/[slug]/[categorySlug]  GET (category within collection)
 /api/auth/[...nextauth]        NextAuth handlers
-/api/checkout/create-order     POST (create order)
-/api/payoneer/create-session   POST (payment session)
-/api/payoneer/webhook          POST (payment callbacks)
-/api/seed                      GET (seed database - dev only)
-/api/admin/products            POST (create)
-/api/admin/products/[id]       GET, PUT, DELETE
-/api/admin/categories          POST (create)
+/api/inquiry                   POST (wholesale inquiry, sends email)
+/api/upload                    POST (Vercel Blob), DELETE
+
+# Admin (protected - requires admin role)
+/api/admin/products            GET, POST
+/api/admin/products/[id]       PUT, DELETE (soft delete)
+/api/admin/collections         GET, POST
+/api/admin/collections/[id]    GET, PUT, DELETE
+/api/admin/categories          GET, POST
 /api/admin/categories/[id]     GET, PUT, DELETE
+/api/admin/sizes               GET, POST
+/api/admin/sizes/[id]          GET, PUT, DELETE
 /api/admin/orders/[id]         GET, PUT
 /api/admin/users/[id]          GET, PUT
+
+# Dev only
+/api/seed                      GET
 ```
+
+## Authentication (NextAuth)
+
+NextAuth with Credentials provider in `src/lib/auth.ts`:
+- Login page: `/login`
+- Admin routes protected via `getServerSession()` check
+- Admin user: `admin@kalashheritage.com` / `admin123`
+
+```typescript
+const session = await getServerSession(authOptions);
+if (!session || session.user.role !== "admin") {
+  return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+}
+```
+
+## Customer Flow (B2B Wholesale)
+
+1. Browse collections at `/collections`
+2. Navigate: Collection → Category (optional) → Size → Products
+3. View products at `/shop` or `/shop/[slug]`
+4. Add to inquiry list (stored in `inquiryStore`)
+5. Review list at `/cart` (shows as "Inquiry List")
+6. Submit inquiry at `/checkout` (contact form, not payment)
+7. Receive confirmation + optional WhatsApp link
+
+**No prices shown on product pages** - wholesale pricing provided via email response.
 
 ## Admin Dashboard
 
-Located at `/admin` (protected, requires admin role):
-- Dashboard with stats
-- Products CRUD: `/admin/products`
+Located at `/admin` (protected):
+- Dashboard with stats: `/admin`
+- Collections CRUD: `/admin/collections`
 - Categories CRUD: `/admin/categories`
-- Orders management: `/admin/orders`
-- Users management: `/admin/users`
+- Sizes CRUD: `/admin/sizes`
+- Products CRUD: `/admin/products`
+- Orders: `/admin/orders`
+- Users: `/admin/users`
 
-## Checkout Flow
+## Services
 
-Multi-step checkout at `/checkout`:
-1. Shipping form (guest or logged in)
-2. Order review
-3. Payoneer hosted payment page
+### Payment (`src/services/payment/`)
+- `PaymentService.ts` - Gateway abstraction (Stripe, PayPal, Safepay, Payoneer)
+- `PayoneerGateway.ts` - Implemented for Pakistan
+- **Currently unused** - site is inquiry-based, not checkout-based
 
-Guest checkout supported with optional account creation.
+### Shipping (`src/services/shipping/ShippingService.ts`)
+- Region-based rate calculation
+- Supports: Pakistan, Middle East, Europe, North America
 
-## Payment Gateway
-
-Stripe NOT available in Pakistan. Using **Payoneer Checkout API** (hosted payment page).
-
-Payment abstraction in `src/services/payment/PaymentService.ts` supports:
-- **Payoneer** (recommended for Pakistan) - `PayoneerGateway.ts`
-- PayPal, Safepay, Stripe (stubs)
-
-Payoneer env vars:
-```env
-PAYONEER_MERCHANT_CODE=xxx
-PAYONEER_API_TOKEN=xxx
-PAYONEER_DIVISION=xxx
-PAYONEER_API_URL=https://api.sandbox.oscato.com/api
-```
+### Currency (`src/services/currency/CurrencyService.ts`)
+- Multi-currency support: USD, EUR, GBP, PKR, AED, SAR
+- Static exchange rates (API integration TODO)
 
 ## Environment Variables
 
 ```env
+# Required
 DATABASE_URL=postgresql://...
 NEXTAUTH_URL=http://localhost:3000
 NEXTAUTH_SECRET=your-secret-here
+BLOB_READ_WRITE_TOKEN=vercel_blob_...
+
+# Email notifications (optional)
+SMTP_HOST=smtp.example.com
+SMTP_PORT=587
+SMTP_USER=user@example.com
+SMTP_PASS=password
+ADMIN_EMAIL=admin@kalashheritage.com
+
+# WhatsApp (optional)
+WHATSAPP_NUMBER=+971505787476
+
+# Payment (not currently used)
+PAYONEER_MERCHANT_CODE=xxx
+PAYONEER_API_TOKEN=xxx
+PAYONEER_DIVISION=xxx
+PAYONEER_API_URL=https://api.sandbox.oscato.com/api
 ```
 
 ## Troubleshooting
@@ -183,6 +259,8 @@ NEXTAUTH_SECRET=your-secret-here
 | Params type error | Use `Promise<{ param: string }>` |
 | "Entity metadata not found" | Check relations use lazy require() |
 | Database connection failed | Verify DATABASE_URL prefix is "DATABASE" |
+| PostgreSQL array parsing | Use `parsePostgresArray()` helper |
+| Build fails with DB error | Add `export const dynamic = 'force-dynamic'` |
 
 ## User Workflow Preferences
 
@@ -193,6 +271,6 @@ NEXTAUTH_SECRET=your-secret-here
 
 ## Design System
 
-- **Colors:** Earth tones (browns, beiges) with red accents
+- **Colors:** Earth tones (browns, beiges) with red accents (`primary-600` = #8B4513)
 - **Typography:** Playfair Display (headings), Inter (body)
 - **Style:** Modern, minimal, classy, premium

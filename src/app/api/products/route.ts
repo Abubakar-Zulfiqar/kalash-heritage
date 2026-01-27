@@ -145,11 +145,9 @@ export async function GET(request: NextRequest) {
     const parsePostgresArray = (value: string | string[] | null): string[] => {
       if (!value) return [];
       if (Array.isArray(value)) return value;
-      // PostgreSQL returns arrays as {item1,item2,...} format
       if (typeof value === 'string' && value.startsWith('{') && value.endsWith('}')) {
         const inner = value.slice(1, -1);
         if (!inner) return [];
-        // Handle quoted strings with commas inside
         const items: string[] = [];
         let current = '';
         let inQuotes = false;
@@ -202,7 +200,7 @@ export async function GET(request: NextRequest) {
         diameter: p.diameter,
         material: p.material,
         color: p.color,
-        size: p.sizeName, // Transform size object to string
+        size: p.sizeName,
         category: p.categoryName,
         collection: p.collectionName,
       };

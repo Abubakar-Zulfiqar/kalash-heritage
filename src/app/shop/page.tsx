@@ -32,6 +32,7 @@ function ShopContent() {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [totalProducts, setTotalProducts] = useState(0);
 
   // Read URL params
   const collectionFromUrl = searchParams.get("collection") || "";
@@ -43,8 +44,6 @@ function ShopContent() {
   const [selectedColor, setSelectedColor] = useState("");
   const [selectedStyle, setSelectedStyle] = useState("");
   const [sortBy, setSortBy] = useState("createdAt");
-  const [minPrice, setMinPrice] = useState("");
-  const [maxPrice, setMaxPrice] = useState("");
 
   // Sync URL params to state
   useEffect(() => {
@@ -84,8 +83,6 @@ function ShopContent() {
     if (sizeFromUrl) params.append("size", sizeFromUrl);
     if (selectedColor) params.append("color", selectedColor);
     if (selectedStyle) params.append("style", selectedStyle);
-    if (minPrice) params.append("minPrice", minPrice);
-    if (maxPrice) params.append("maxPrice", maxPrice);
 
     fetch(`/api/products?${params}`)
       .then((res) => res.json())
@@ -93,9 +90,11 @@ function ShopContent() {
         if (data.data) {
           setProducts(data.data);
           setTotalPages(data.totalPages);
+          setTotalProducts(data.total);
         } else {
           setProducts([]);
           setTotalPages(1);
+          setTotalProducts(0);
         }
         setLoading(false);
       })
@@ -103,9 +102,10 @@ function ShopContent() {
         console.error("Error fetching products:", error);
         setProducts([]);
         setTotalPages(1);
+        setTotalProducts(0);
         setLoading(false);
       });
-  }, [page, selectedCollection, categoryFromUrl, sizeFromUrl, selectedColor, selectedStyle, sortBy, minPrice, maxPrice]);
+  }, [page, selectedCollection, categoryFromUrl, sizeFromUrl, selectedColor, selectedStyle, sortBy]);
 
   const colors = ["Red", "Blue", "Grey", "Burgundy", "Navy", "Teal", "Black", "Multi"];
   const styles = ["Oriental", "Modern", "Vintage", "Persian"];
@@ -114,12 +114,13 @@ function ShopContent() {
     setSelectedCollection("");
     setSelectedColor("");
     setSelectedStyle("");
-    setMinPrice("");
-    setMaxPrice("");
     setPage(1);
     // Clear URL params by navigating to /shop
     window.history.pushState({}, "", "/shop");
   };
+
+  // Check if any filter is active
+  const hasActiveFilters = selectedCollection || selectedColor || selectedStyle || collectionFromUrl || categoryFromUrl || sizeFromUrl;
 
   // Get active filter context for breadcrumb display
   const getFilterContext = () => {
@@ -188,144 +189,131 @@ function ShopContent() {
             <div className="bg-gray-50 p-6 rounded-lg sticky top-24">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-semibold text-gray-900">Filters</h2>
-                <button
-                  onClick={resetFilters}
-                  className="text-sm text-primary-600 hover:text-primary-800"
-                >
-                  Reset
-                </button>
+                {hasActiveFilters && (
+                  <button
+                    onClick={resetFilters}
+                    className="text-sm text-primary-600 hover:text-primary-800"
+                  >
+                    Reset
+                  </button>
+                )}
               </div>
 
               {/* Collection Filter */}
               <div className="mb-6">
                 <h3 className="font-semibold text-gray-900 mb-3">Collection</h3>
-                <div className="space-y-2">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="collection"
-                      value=""
-                      checked={selectedCollection === ""}
-                      onChange={(e) => {
-                        setSelectedCollection(e.target.value);
+                <ul className="space-y-2">
+                  <li>
+                    <button
+                      onClick={() => {
+                        setSelectedCollection("");
                         setPage(1);
                       }}
-                      className="w-4 h-4"
-                    />
-                    <span className="text-sm text-gray-700">All</span>
-                  </label>
+                      className={`text-sm transition-colors ${
+                        selectedCollection === ""
+                          ? "text-gray-900 font-medium"
+                          : "text-gray-600 hover:text-gray-900"
+                      }`}
+                    >
+                      All
+                    </button>
+                  </li>
                   {collections.map((col) => (
-                    <label key={col.id} className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="radio"
-                        name="collection"
-                        value={col.slug}
-                        checked={selectedCollection === col.slug}
-                        onChange={(e) => {
-                          setSelectedCollection(e.target.value);
+                    <li key={col.id}>
+                      <button
+                        onClick={() => {
+                          setSelectedCollection(col.slug);
                           setPage(1);
                         }}
-                        className="w-4 h-4"
-                      />
-                      <span className="text-sm text-gray-700">{col.name}</span>
-                    </label>
+                        className={`text-sm transition-colors ${
+                          selectedCollection === col.slug
+                            ? "text-gray-900 font-medium"
+                            : "text-gray-600 hover:text-gray-900"
+                        }`}
+                      >
+                        {col.name}
+                      </button>
+                    </li>
                   ))}
-                </div>
+                </ul>
               </div>
 
               {/* Color Filter */}
               <div className="mb-6">
                 <h3 className="font-semibold text-gray-900 mb-3">Color</h3>
-                <div className="space-y-2">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="color"
-                      value=""
-                      checked={selectedColor === ""}
-                      onChange={(e) => {
-                        setSelectedColor(e.target.value);
+                <ul className="space-y-2">
+                  <li>
+                    <button
+                      onClick={() => {
+                        setSelectedColor("");
                         setPage(1);
                       }}
-                      className="w-4 h-4"
-                    />
-                    <span className="text-sm text-gray-700">All</span>
-                  </label>
+                      className={`text-sm transition-colors ${
+                        selectedColor === ""
+                          ? "text-gray-900 font-medium"
+                          : "text-gray-600 hover:text-gray-900"
+                      }`}
+                    >
+                      All
+                    </button>
+                  </li>
                   {colors.map((color) => (
-                    <label key={color} className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="radio"
-                        name="color"
-                        value={color}
-                        checked={selectedColor === color}
-                        onChange={(e) => {
-                          setSelectedColor(e.target.value);
+                    <li key={color}>
+                      <button
+                        onClick={() => {
+                          setSelectedColor(color);
                           setPage(1);
                         }}
-                        className="w-4 h-4"
-                      />
-                      <span className="text-sm text-gray-700">{color}</span>
-                    </label>
+                        className={`text-sm transition-colors ${
+                          selectedColor === color
+                            ? "text-gray-900 font-medium"
+                            : "text-gray-600 hover:text-gray-900"
+                        }`}
+                      >
+                        {color}
+                      </button>
+                    </li>
                   ))}
-                </div>
+                </ul>
               </div>
 
               {/* Style Filter */}
               <div className="mb-6">
                 <h3 className="font-semibold text-gray-900 mb-3">Style</h3>
-                <div className="space-y-2">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="style"
-                      value=""
-                      checked={selectedStyle === ""}
-                      onChange={(e) => {
-                        setSelectedStyle(e.target.value);
+                <ul className="space-y-2">
+                  <li>
+                    <button
+                      onClick={() => {
+                        setSelectedStyle("");
                         setPage(1);
                       }}
-                      className="w-4 h-4"
-                    />
-                    <span className="text-sm text-gray-700">All</span>
-                  </label>
+                      className={`text-sm transition-colors ${
+                        selectedStyle === ""
+                          ? "text-gray-900 font-medium"
+                          : "text-gray-600 hover:text-gray-900"
+                      }`}
+                    >
+                      All
+                    </button>
+                  </li>
                   {styles.map((style) => (
-                    <label key={style} className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="radio"
-                        name="style"
-                        value={style}
-                        checked={selectedStyle === style}
-                        onChange={(e) => {
-                          setSelectedStyle(e.target.value);
+                    <li key={style}>
+                      <button
+                        onClick={() => {
+                          setSelectedStyle(style);
                           setPage(1);
                         }}
-                        className="w-4 h-4"
-                      />
-                      <span className="text-sm text-gray-700">{style}</span>
-                    </label>
+                        className={`text-sm transition-colors ${
+                          selectedStyle === style
+                            ? "text-gray-900 font-medium"
+                            : "text-gray-600 hover:text-gray-900"
+                        }`}
+                      >
+                        {style}
+                      </button>
+                    </li>
                   ))}
-                </div>
-              </div>
-
-              {/* Price Range */}
-              <div className="mb-6">
-                <h3 className="font-semibold text-gray-900 mb-3">Price Range</h3>
-                <div className="space-y-2">
-                  <input
-                    type="number"
-                    placeholder="Min Price"
-                    value={minPrice}
-                    onChange={(e) => setMinPrice(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
-                  />
-                  <input
-                    type="number"
-                    placeholder="Max Price"
-                    value={maxPrice}
-                    onChange={(e) => setMaxPrice(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
-                  />
-                </div>
+                </ul>
               </div>
             </div>
           </aside>
@@ -335,7 +323,7 @@ function ShopContent() {
             {/* Sort & Results Count */}
             <div className="flex items-center justify-between mb-6">
               <p className="text-gray-600">
-                {!loading && `${products.length} products found`}
+                {!loading && `${totalProducts} products found`}
               </p>
               <select
                 value={sortBy}
@@ -343,7 +331,6 @@ function ShopContent() {
                 className="px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
               >
                 <option value="createdAt">Newest</option>
-                <option value="price">Price: Low to High</option>
                 <option value="name">Name: A-Z</option>
               </select>
             </div>

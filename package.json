@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "seed": "ts-node -r tsconfig-paths/register --compiler-options {\\\"module\\\":\\\"commonjs\\\"} src/lib/seed.ts"
+    "seed": "ts-node -r tsconfig-paths/register --compiler-options {\\\"module\\\":\\\"commonjs\\\"} src/lib/seed.ts",
+    "fix-slugs": "ts-node -r tsconfig-paths/register --compiler-options {\\\"module\\\":\\\"commonjs\\\"} src/lib/fix-slugs.ts"
   },
   "dependencies": {
     "@types/bcryptjs": "^2.4.6",
