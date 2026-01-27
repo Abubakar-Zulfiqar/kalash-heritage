@@ -7,6 +7,39 @@ import type { Category } from "@/entities/Category";
 import type { Size } from "@/entities/Size";
 import Link from "next/link";
 
+// Helper function to parse PostgreSQL array
+function parsePostgresArray(value: string | string[] | null | undefined): string[] {
+  if (!value) return [];
+  if (Array.isArray(value)) return value;
+  if (typeof value === 'string') {
+    let str = value.trim();
+    if (str.startsWith('{')) str = str.slice(1);
+    if (str.endsWith('}')) str = str.slice(0, -1);
+    if (!str) return [];
+    const items: string[] = [];
+    let current = '';
+    let inQuotes = false;
+    for (let i = 0; i < str.length; i++) {
+      const char = str[i];
+      if (char === '"' && str[i - 1] !== '\\') {
+        inQuotes = !inQuotes;
+      } else if (char === ',' && !inQuotes) {
+        const item = current.trim().replace(/^"|"$/g, '');
+        if (item) items.push(item);
+        current = '';
+      } else {
+        current += char;
+      }
+    }
+    if (current) {
+      const item = current.trim().replace(/^"|"$/g, '');
+      if (item) items.push(item);
+    }
+    return items;
+  }
+  return [];
+}
+
 async function getProduct(id: string) {
   try {
     const db = await getDatabase();
@@ -107,7 +140,7 @@ export default async function EditProductPage({
           diameter: product.diameter || undefined,
           material: product.material || undefined,
           color: product.color || undefined,
-          images: product.images || [],
+          images: parsePostgresArray(product.images),
           thumbnail: product.thumbnail || undefined,
           metaTitle: product.metaTitle || undefined,
           metaDescription: product.metaDescription || undefined,
