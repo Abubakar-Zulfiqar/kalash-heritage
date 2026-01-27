@@ -15,6 +15,7 @@ interface Product {
   description: string;
   images: string[];
   dimensions?: string;
+  diameter?: string;
   material?: string;
   color?: string;
   colors?: string[];
@@ -247,6 +248,14 @@ export default function ProductDetailPage() {
                     <span className="text-gray-600">Dimensions:</span>
                     <span className="ml-2 font-medium text-gray-900">
                       {product.dimensions}
+                    </span>
+                  </div>
+                )}
+                {product.diameter && (
+                  <div>
+                    <span className="text-gray-600">Diameter:</span>
+                    <span className="ml-2 font-medium text-gray-900">
+                      {product.diameter}
                     </span>
                   </div>
                 )}
