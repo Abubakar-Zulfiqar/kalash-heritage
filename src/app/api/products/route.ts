@@ -170,7 +170,8 @@ export async function GET(request: NextRequest) {
           if (char === '"' && str[i - 1] !== '\\') {
             inQuotes = !inQuotes;
           } else if (char === ',' && !inQuotes) {
-            const item = current.trim().replace(/^"|"$/g, '');
+            // Strip ALL levels of quotes (handles ""url"" case)
+            const item = current.trim().replace(/^"+|"+$/g, '');
             if (item) items.push(item);
             current = '';
           } else {
@@ -178,7 +179,8 @@ export async function GET(request: NextRequest) {
           }
         }
         if (current) {
-          const item = current.trim().replace(/^"|"$/g, '');
+          // Strip ALL levels of quotes (handles ""url"" case)
+          const item = current.trim().replace(/^"+|"+$/g, '');
           if (item) items.push(item);
         }
         return items;

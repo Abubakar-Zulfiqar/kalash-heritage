@@ -32,7 +32,7 @@ function parsePostgresArray(value: string | string[] | null): string[] {
       if (char === '"' && str[i - 1] !== '\\') {
         inQuotes = !inQuotes;
       } else if (char === ',' && !inQuotes) {
-        const item = current.trim().replace(/^"|"$/g, '');
+        const item = current.trim().replace(/^"+|"+$/g, '');
         if (item) items.push(item);
         current = '';
       } else {
@@ -40,7 +40,7 @@ function parsePostgresArray(value: string | string[] | null): string[] {
       }
     }
     if (current) {
-      const item = current.trim().replace(/^"|"$/g, '');
+      const item = current.trim().replace(/^"+|"+$/g, '');
       if (item) items.push(item);
     }
     return items;

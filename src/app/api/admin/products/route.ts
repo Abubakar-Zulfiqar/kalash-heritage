@@ -61,8 +61,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Convert images array to PostgreSQL array format
-    const imagesArray = data.images && data.images.length > 0
-      ? `{${data.images.map((img: string) => `"${img}"`).join(',')}}`
+    // Strip any existing quotes to prevent double-quoting
+    const cleanImages = (data.images || []).map((img: string) =>
+      img.replace(/^"+|"+$/g, '').trim()
+    ).filter((img: string) => img.length > 0);
+    const imagesArray = cleanImages.length > 0
+      ? `{${cleanImages.map((img: string) => `"${img}"`).join(',')}}`
       : '{}';
 
     // Insert the new product using raw query
