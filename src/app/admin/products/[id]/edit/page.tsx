@@ -7,6 +7,9 @@ import type { Category } from "@/entities/Category";
 import type { Size } from "@/entities/Size";
 import Link from "next/link";
 
+// Force dynamic rendering to always get fresh data
+export const dynamic = 'force-dynamic';
+
 // Helper function to parse PostgreSQL array
 function parsePostgresArray(value: string | string[] | null | undefined): string[] {
   if (!value) return [];
