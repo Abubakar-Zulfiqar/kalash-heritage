@@ -31,10 +31,44 @@ interface SelectedFilters {
 }
 
 interface ProductFiltersProps {
-  collectionSlug?: string; // If provided, filters are scoped to this collection
+  collectionSlug?: string;
   onFiltersChange: (filters: SelectedFilters) => void;
   initialFilters?: Partial<SelectedFilters>;
-  showCollectionFilter?: boolean; // Whether to show collection filter (false for collection pages)
+  showCollectionFilter?: boolean;
+}
+
+interface CollapsibleSectionProps {
+  title: string;
+  children: React.ReactNode;
+  defaultOpen?: boolean;
+}
+
+function CollapsibleSection({ title, children, defaultOpen = true }: CollapsibleSectionProps) {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
+
+  return (
+    <div className="mb-6">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full flex items-center justify-between font-semibold text-gray-900 mb-3 hover:text-primary-600 transition-colors"
+      >
+        <span>{title}</span>
+        <svg
+          className={`w-4 h-4 transition-transform ${isOpen ? "rotate-180" : ""}`}
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+      {isOpen && (
+        <ul className="space-y-2 max-h-48 overflow-y-auto pr-2">
+          {children}
+        </ul>
+      )}
+    </div>
+  );
 }
 
 export default function ProductFilters({
@@ -85,7 +119,7 @@ export default function ProductFilters({
       });
   }, [collectionSlug]);
 
-  // Update initial filters when they change (e.g., from URL params)
+  // Update initial filters when they change
   useEffect(() => {
     setSelectedFilters((prev) => ({
       ...prev,
@@ -161,177 +195,162 @@ export default function ProductFilters({
 
       {/* Collection Filter */}
       {showCollectionFilter && filtersData.collections.length > 0 && (
-        <div className="mb-6">
-          <h3 className="font-semibold text-gray-900 mb-3">Collection</h3>
-          <ul className="space-y-2">
-            <li>
+        <CollapsibleSection title="Collection" defaultOpen={true}>
+          <li>
+            <button
+              onClick={() => updateFilter("collection", "")}
+              className={`text-sm transition-colors ${
+                selectedFilters.collection === ""
+                  ? "text-gray-900 font-medium"
+                  : "text-gray-600 hover:text-gray-900"
+              }`}
+            >
+              All
+            </button>
+          </li>
+          {filtersData.collections.map((col) => (
+            <li key={col.id}>
               <button
-                onClick={() => updateFilter("collection", "")}
+                onClick={() => updateFilter("collection", col.slug)}
                 className={`text-sm transition-colors ${
-                  selectedFilters.collection === ""
+                  selectedFilters.collection === col.slug
                     ? "text-gray-900 font-medium"
                     : "text-gray-600 hover:text-gray-900"
                 }`}
               >
-                All
+                {col.name}
               </button>
             </li>
-            {filtersData.collections.map((col) => (
-              <li key={col.id}>
-                <button
-                  onClick={() => updateFilter("collection", col.slug)}
-                  className={`text-sm transition-colors ${
-                    selectedFilters.collection === col.slug
-                      ? "text-gray-900 font-medium"
-                      : "text-gray-600 hover:text-gray-900"
-                  }`}
-                >
-                  {col.name}
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
+          ))}
+        </CollapsibleSection>
       )}
 
       {/* Size Filter */}
       {filtersData.sizes.length > 0 && (
-        <div className="mb-6">
-          <h3 className="font-semibold text-gray-900 mb-3">Size</h3>
-          <ul className="space-y-2">
-            <li>
+        <CollapsibleSection title="Size" defaultOpen={filtersData.sizes.length <= 6}>
+          <li>
+            <button
+              onClick={() => updateFilter("size", "")}
+              className={`text-sm transition-colors ${
+                selectedFilters.size === ""
+                  ? "text-gray-900 font-medium"
+                  : "text-gray-600 hover:text-gray-900"
+              }`}
+            >
+              All
+            </button>
+          </li>
+          {filtersData.sizes.map((size) => (
+            <li key={size.id}>
               <button
-                onClick={() => updateFilter("size", "")}
+                onClick={() => updateFilter("size", size.slug)}
                 className={`text-sm transition-colors ${
-                  selectedFilters.size === ""
+                  selectedFilters.size === size.slug
                     ? "text-gray-900 font-medium"
                     : "text-gray-600 hover:text-gray-900"
                 }`}
               >
-                All
+                {size.name}
               </button>
             </li>
-            {filtersData.sizes.map((size) => (
-              <li key={size.id}>
-                <button
-                  onClick={() => updateFilter("size", size.slug)}
-                  className={`text-sm transition-colors ${
-                    selectedFilters.size === size.slug
-                      ? "text-gray-900 font-medium"
-                      : "text-gray-600 hover:text-gray-900"
-                  }`}
-                >
-                  {size.name}
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
+          ))}
+        </CollapsibleSection>
       )}
 
       {/* Color Filter */}
       {filtersData.colors.length > 0 && (
-        <div className="mb-6">
-          <h3 className="font-semibold text-gray-900 mb-3">Color</h3>
-          <ul className="space-y-2">
-            <li>
+        <CollapsibleSection title="Color" defaultOpen={filtersData.colors.length <= 6}>
+          <li>
+            <button
+              onClick={() => updateFilter("color", "")}
+              className={`text-sm transition-colors ${
+                selectedFilters.color === ""
+                  ? "text-gray-900 font-medium"
+                  : "text-gray-600 hover:text-gray-900"
+              }`}
+            >
+              All
+            </button>
+          </li>
+          {filtersData.colors.map((color) => (
+            <li key={color}>
               <button
-                onClick={() => updateFilter("color", "")}
+                onClick={() => updateFilter("color", color)}
                 className={`text-sm transition-colors ${
-                  selectedFilters.color === ""
+                  selectedFilters.color === color
                     ? "text-gray-900 font-medium"
                     : "text-gray-600 hover:text-gray-900"
                 }`}
               >
-                All
+                {color}
               </button>
             </li>
-            {filtersData.colors.map((color) => (
-              <li key={color}>
-                <button
-                  onClick={() => updateFilter("color", color)}
-                  className={`text-sm transition-colors ${
-                    selectedFilters.color === color
-                      ? "text-gray-900 font-medium"
-                      : "text-gray-600 hover:text-gray-900"
-                  }`}
-                >
-                  {color}
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
+          ))}
+        </CollapsibleSection>
       )}
 
       {/* Style Filter */}
       {filtersData.styles.length > 0 && (
-        <div className="mb-6">
-          <h3 className="font-semibold text-gray-900 mb-3">Style</h3>
-          <ul className="space-y-2">
-            <li>
+        <CollapsibleSection title="Style" defaultOpen={filtersData.styles.length <= 6}>
+          <li>
+            <button
+              onClick={() => updateFilter("style", "")}
+              className={`text-sm transition-colors ${
+                selectedFilters.style === ""
+                  ? "text-gray-900 font-medium"
+                  : "text-gray-600 hover:text-gray-900"
+              }`}
+            >
+              All
+            </button>
+          </li>
+          {filtersData.styles.map((style) => (
+            <li key={style}>
               <button
-                onClick={() => updateFilter("style", "")}
+                onClick={() => updateFilter("style", style)}
                 className={`text-sm transition-colors ${
-                  selectedFilters.style === ""
+                  selectedFilters.style === style
                     ? "text-gray-900 font-medium"
                     : "text-gray-600 hover:text-gray-900"
                 }`}
               >
-                All
+                {style}
               </button>
             </li>
-            {filtersData.styles.map((style) => (
-              <li key={style}>
-                <button
-                  onClick={() => updateFilter("style", style)}
-                  className={`text-sm transition-colors ${
-                    selectedFilters.style === style
-                      ? "text-gray-900 font-medium"
-                      : "text-gray-600 hover:text-gray-900"
-                  }`}
-                >
-                  {style}
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
+          ))}
+        </CollapsibleSection>
       )}
 
       {/* Material Filter */}
       {filtersData.materials.length > 0 && (
-        <div className="mb-6">
-          <h3 className="font-semibold text-gray-900 mb-3">Material</h3>
-          <ul className="space-y-2">
-            <li>
+        <CollapsibleSection title="Material" defaultOpen={filtersData.materials.length <= 6}>
+          <li>
+            <button
+              onClick={() => updateFilter("material", "")}
+              className={`text-sm transition-colors ${
+                selectedFilters.material === ""
+                  ? "text-gray-900 font-medium"
+                  : "text-gray-600 hover:text-gray-900"
+              }`}
+            >
+              All
+            </button>
+          </li>
+          {filtersData.materials.map((material) => (
+            <li key={material}>
               <button
-                onClick={() => updateFilter("material", "")}
+                onClick={() => updateFilter("material", material)}
                 className={`text-sm transition-colors ${
-                  selectedFilters.material === ""
+                  selectedFilters.material === material
                     ? "text-gray-900 font-medium"
                     : "text-gray-600 hover:text-gray-900"
                 }`}
               >
-                All
+                {material}
               </button>
             </li>
-            {filtersData.materials.map((material) => (
-              <li key={material}>
-                <button
-                  onClick={() => updateFilter("material", material)}
-                  className={`text-sm transition-colors ${
-                    selectedFilters.material === material
-                      ? "text-gray-900 font-medium"
-                      : "text-gray-600 hover:text-gray-900"
-                  }`}
-                >
-                  {material}
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
+          ))}
+        </CollapsibleSection>
       )}
     </div>
   );

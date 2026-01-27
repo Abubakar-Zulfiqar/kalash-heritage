@@ -63,25 +63,27 @@ export async function GET(request: NextRequest) {
     const materials = materialsResult.map((r: { material: string }) => r.material);
 
     // Get sizes - either all sizes or filtered by collection
+    // Use DISTINCT ON (name) to deduplicate sizes with same name
     let sizesQuery: string;
     let sizesParams: string[] = [];
 
     if (collection) {
       // Get sizes that belong to this collection (via category or directly)
+      // Use subquery to deduplicate by name
       sizesQuery = `
-        SELECT DISTINCT s.id, s.name, s.slug
+        SELECT DISTINCT ON (s.name) s.id, s.name, s.slug
         FROM sizes s
         LEFT JOIN categories c ON s."categoryId" = c.id
         LEFT JOIN collections col ON c."collectionId" = col.id
         LEFT JOIN collections col2 ON s."collectionId" = col2.id
         WHERE (col.slug = $1 OR col2.slug = $1)
-        ORDER BY s.name
+        ORDER BY s.name, s.id
       `;
       sizesParams = [collection];
     } else {
-      // Get all sizes
+      // Get all sizes - deduplicate by name
       sizesQuery = `
-        SELECT id, name, slug FROM sizes ORDER BY name
+        SELECT DISTINCT ON (name) id, name, slug FROM sizes ORDER BY name, id
       `;
     }
     const sizesResult = await db.query(sizesQuery, sizesParams);
