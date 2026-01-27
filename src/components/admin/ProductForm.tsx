@@ -77,6 +77,9 @@ export default function ProductForm({ collections, categories, sizes, initialDat
   const [selectedCollectionId, setSelectedCollectionId] = useState(initialSelections.collectionId);
   const [selectedCategoryId, setSelectedCategoryId] = useState(initialSelections.categoryId);
 
+  // Debug: log what images we receive
+  console.log('ProductForm initialData.images:', initialData?.images);
+
   const [formData, setFormData] = useState({
     name: initialData?.name || "",
     sku: initialData?.sku || "",
