@@ -7,6 +7,47 @@ import { OrderStatus, PaymentStatus } from "@/entities/Order";
 import type { OrderItem } from "@/entities/OrderItem";
 import OrderStatusForm from "./OrderStatusForm";
 
+// Helper function to parse PostgreSQL array
+function parsePostgresArray(value: string | string[] | null | undefined): string[] {
+  if (!value) return [];
+  if (Array.isArray(value)) return value;
+  if (typeof value === 'string') {
+    let str = value.trim();
+    if (str.startsWith('{')) str = str.slice(1);
+    if (str.endsWith('}')) str = str.slice(0, -1);
+    if (!str) return [];
+    const items: string[] = [];
+    let current = '';
+    let inQuotes = false;
+    for (let i = 0; i < str.length; i++) {
+      const char = str[i];
+      if (char === '"' && str[i - 1] !== '\\') {
+        inQuotes = !inQuotes;
+      } else if (char === ',' && !inQuotes) {
+        const item = current.trim().replace(/^"|"$/g, '');
+        if (item) items.push(item);
+        current = '';
+      } else {
+        current += char;
+      }
+    }
+    if (current) {
+      const item = current.trim().replace(/^"|"$/g, '');
+      if (item) items.push(item);
+    }
+    return items;
+  }
+  return [];
+}
+
+// Helper to get first image from product
+function getProductImage(product: { thumbnail?: string; images?: string | string[] } | undefined): string {
+  if (!product) return "/placeholder-rug.svg";
+  if (product.thumbnail) return product.thumbnail;
+  const images = parsePostgresArray(product.images);
+  return images[0] || "/placeholder-rug.svg";
+}
+
 async function getOrder(id: string) {
   try {
     const db = await getDatabase();
@@ -127,7 +168,7 @@ export default async function OrderDetailPage({
                 <div key={item.id} className="p-6 flex gap-4">
                   <div className="relative w-20 h-20 bg-gray-100 rounded overflow-hidden flex-shrink-0">
                     <Image
-                      src={item.product?.thumbnail || item.product?.images?.[0] || "/placeholder-rug.svg"}
+                      src={getProductImage(item.product)}
                       alt={item.product?.name || "Product"}
                       fill
                       className="object-cover"
