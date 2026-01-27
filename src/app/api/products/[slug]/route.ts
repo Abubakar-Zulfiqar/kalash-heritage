@@ -13,12 +13,12 @@ function parsePostgresArray(value: string | string[] | null): string[] {
     // Handle PostgreSQL array format {url1,url2} or {"url1","url2"}
     let str = value.trim();
 
-    // Remove leading { if present
-    if (str.startsWith('{')) {
+    // Remove ALL leading { characters (handles {{{{url}}}} case)
+    while (str.startsWith('{')) {
       str = str.slice(1);
     }
-    // Remove trailing } if present
-    if (str.endsWith('}')) {
+    // Remove ALL trailing } characters
+    while (str.endsWith('}')) {
       str = str.slice(0, -1);
     }
 

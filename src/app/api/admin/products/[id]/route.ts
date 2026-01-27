@@ -51,10 +51,10 @@ export async function PUT(
     }
 
     // Convert images array to PostgreSQL array format
-    // Strip any existing quotes to prevent double-quoting
+    // Strip any existing quotes and braces to prevent corruption
     const cleanImages = (data.images || []).map((img: string) =>
-      img.replace(/^"+|"+$/g, '').trim()
-    ).filter((img: string) => img.length > 0);
+      img.replace(/^["{]+|["}]+$/g, '').trim()
+    ).filter((img: string) => img.length > 0 && img.startsWith('http'));
     const imagesArray = cleanImages.length > 0
       ? `{${cleanImages.map((img: string) => `"${img}"`).join(',')}}`
       : '{}';

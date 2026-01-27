@@ -13,8 +13,9 @@ function parsePostgresArray(value: string | string[] | null | undefined): string
   if (Array.isArray(value)) return value;
   if (typeof value === 'string') {
     let str = value.trim();
-    if (str.startsWith('{')) str = str.slice(1);
-    if (str.endsWith('}')) str = str.slice(0, -1);
+    // Remove ALL leading/trailing braces (handles {{{{url}}}} case)
+    while (str.startsWith('{')) str = str.slice(1);
+    while (str.endsWith('}')) str = str.slice(0, -1);
     if (!str) return [];
     const items: string[] = [];
     let current = '';
