@@ -7,29 +7,45 @@ import DeleteProductButton from "./DeleteProductButton";
 function parsePostgresArray(value: string | string[] | null): string[] {
   if (!value) return [];
   if (Array.isArray(value)) return value;
-  if (typeof value === 'string' && value.startsWith('{') && value.endsWith('}')) {
-    const inner = value.slice(1, -1);
-    if (!inner) return [];
+  if (typeof value === 'string') {
+    // Handle PostgreSQL array format {url1,url2} or {"url1","url2"}
+    let str = value.trim();
+
+    // Remove leading { if present
+    if (str.startsWith('{')) {
+      str = str.slice(1);
+    }
+    // Remove trailing } if present
+    if (str.endsWith('}')) {
+      str = str.slice(0, -1);
+    }
+
+    // If empty after removing braces, return empty array
+    if (!str) return [];
+
+    // Parse the items (handles both quoted and unquoted)
     const items: string[] = [];
     let current = '';
     let inQuotes = false;
-    for (let i = 0; i < inner.length; i++) {
-      const char = inner[i];
-      if (char === '"' && inner[i - 1] !== '\\') {
+    for (let i = 0; i < str.length; i++) {
+      const char = str[i];
+      if (char === '"' && str[i - 1] !== '\\') {
         inQuotes = !inQuotes;
       } else if (char === ',' && !inQuotes) {
-        items.push(current.replace(/^"|"$/g, ''));
+        const item = current.trim().replace(/^"|"$/g, '');
+        if (item) items.push(item);
         current = '';
       } else {
         current += char;
       }
     }
     if (current) {
-      items.push(current.replace(/^"|"$/g, ''));
+      const item = current.trim().replace(/^"|"$/g, '');
+      if (item) items.push(item);
     }
     return items;
   }
-  return [value];
+  return [];
 }
 
 async function getProducts() {
