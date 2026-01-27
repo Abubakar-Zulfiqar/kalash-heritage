@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, Suspense, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import ProductCard from "@/components/ProductCard";
+import ProductFilters from "@/components/ProductFilters";
 import { motion } from "framer-motion";
 
 interface Product {
@@ -25,6 +26,14 @@ interface Collection {
   slug: string;
 }
 
+interface SelectedFilters {
+  collection: string;
+  size: string;
+  color: string;
+  style: string;
+  material: string;
+}
+
 function ShopContent() {
   const searchParams = useSearchParams();
   const [products, setProducts] = useState<Product[]>([]);
@@ -33,24 +42,32 @@ function ShopContent() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalProducts, setTotalProducts] = useState(0);
+  const [sortBy, setSortBy] = useState("createdAt");
 
   // Read URL params
   const collectionFromUrl = searchParams.get("collection") || "";
   const categoryFromUrl = searchParams.get("category") || "";
   const sizeFromUrl = searchParams.get("size") || "";
 
-  // Filters
-  const [selectedCollection, setSelectedCollection] = useState(collectionFromUrl);
-  const [selectedColor, setSelectedColor] = useState("");
-  const [selectedStyle, setSelectedStyle] = useState("");
-  const [sortBy, setSortBy] = useState("createdAt");
+  // Filters state
+  const [filters, setFilters] = useState<SelectedFilters>({
+    collection: collectionFromUrl,
+    size: sizeFromUrl,
+    color: "",
+    style: "",
+    material: "",
+  });
 
   // Sync URL params to state
   useEffect(() => {
-    setSelectedCollection(collectionFromUrl);
-  }, [collectionFromUrl]);
+    setFilters((prev) => ({
+      ...prev,
+      collection: collectionFromUrl,
+      size: sizeFromUrl,
+    }));
+  }, [collectionFromUrl, sizeFromUrl]);
 
-  // Fetch collections for filter
+  // Fetch collections for breadcrumb display
   useEffect(() => {
     fetch("/api/collections")
       .then((res) => res.json())
@@ -78,11 +95,12 @@ function ShopContent() {
       sortOrder: "DESC",
     });
 
-    if (selectedCollection) params.append("collection", selectedCollection);
+    if (filters.collection) params.append("collection", filters.collection);
     if (categoryFromUrl) params.append("category", categoryFromUrl);
-    if (sizeFromUrl) params.append("size", sizeFromUrl);
-    if (selectedColor) params.append("color", selectedColor);
-    if (selectedStyle) params.append("style", selectedStyle);
+    if (filters.size) params.append("size", filters.size);
+    if (filters.color) params.append("color", filters.color);
+    if (filters.style) params.append("style", filters.style);
+    if (filters.material) params.append("material", filters.material);
 
     fetch(`/api/products?${params}`)
       .then((res) => res.json())
@@ -105,29 +123,36 @@ function ShopContent() {
         setTotalProducts(0);
         setLoading(false);
       });
-  }, [page, selectedCollection, categoryFromUrl, sizeFromUrl, selectedColor, selectedStyle, sortBy]);
+  }, [page, filters, categoryFromUrl, sortBy]);
 
-  const colors = ["Red", "Blue", "Grey", "Burgundy", "Navy", "Teal", "Black", "Multi"];
-  const styles = ["Oriental", "Modern", "Vintage", "Persian"];
-
-  const resetFilters = () => {
-    setSelectedCollection("");
-    setSelectedColor("");
-    setSelectedStyle("");
+  // Handle filter changes from ProductFilters component
+  const handleFiltersChange = useCallback((newFilters: SelectedFilters) => {
+    setFilters(newFilters);
     setPage(1);
-    // Clear URL params by navigating to /shop
-    window.history.pushState({}, "", "/shop");
-  };
+    // Update URL without full navigation
+    const url = new URL(window.location.href);
+    if (newFilters.collection) {
+      url.searchParams.set("collection", newFilters.collection);
+    } else {
+      url.searchParams.delete("collection");
+    }
+    if (newFilters.size) {
+      url.searchParams.set("size", newFilters.size);
+    } else {
+      url.searchParams.delete("size");
+    }
+    window.history.pushState({}, "", url.pathname + url.search);
+  }, []);
 
   // Check if any filter is active
-  const hasActiveFilters = selectedCollection || selectedColor || selectedStyle || collectionFromUrl || categoryFromUrl || sizeFromUrl;
+  const hasActiveFilters = filters.collection || filters.color || filters.style || filters.material || filters.size || categoryFromUrl;
 
   // Get active filter context for breadcrumb display
   const getFilterContext = () => {
     const parts: { label: string; href: string }[] = [{ label: "Shop", href: "/shop" }];
 
-    if (collectionFromUrl) {
-      const collection = collections.find(c => c.slug === collectionFromUrl);
+    if (filters.collection) {
+      const collection = collections.find(c => c.slug === filters.collection);
       if (collection) {
         parts.push({ label: collection.name, href: `/collections/${collection.slug}` });
       }
@@ -135,8 +160,8 @@ function ShopContent() {
     if (categoryFromUrl) {
       parts.push({ label: categoryFromUrl.replace(/-/g, " "), href: "#" });
     }
-    if (sizeFromUrl) {
-      parts.push({ label: sizeFromUrl.replace(/-/g, " "), href: "#" });
+    if (filters.size) {
+      parts.push({ label: filters.size.replace(/-/g, " "), href: "#" });
     }
 
     return parts;
@@ -174,8 +199,8 @@ function ShopContent() {
           className="text-center mb-12"
         >
           <h1 className="text-5xl font-serif font-bold text-gray-900 mb-4">
-            {collectionFromUrl
-              ? collections.find(c => c.slug === collectionFromUrl)?.name || "Shop"
+            {filters.collection
+              ? collections.find(c => c.slug === filters.collection)?.name || "Shop"
               : "Our Collection"}
           </h1>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
@@ -184,138 +209,19 @@ function ShopContent() {
         </motion.div>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          {/* Filters Sidebar */}
+          {/* Filters Sidebar - using reusable component */}
           <aside className="lg:col-span-1">
-            <div className="bg-gray-50 p-6 rounded-lg sticky top-24">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-gray-900">Filters</h2>
-                {hasActiveFilters && (
-                  <button
-                    onClick={resetFilters}
-                    className="text-sm text-primary-600 hover:text-primary-800"
-                  >
-                    Reset
-                  </button>
-                )}
-              </div>
-
-              {/* Collection Filter */}
-              <div className="mb-6">
-                <h3 className="font-semibold text-gray-900 mb-3">Collection</h3>
-                <ul className="space-y-2">
-                  <li>
-                    <button
-                      onClick={() => {
-                        setSelectedCollection("");
-                        setPage(1);
-                      }}
-                      className={`text-sm transition-colors ${
-                        selectedCollection === ""
-                          ? "text-gray-900 font-medium"
-                          : "text-gray-600 hover:text-gray-900"
-                      }`}
-                    >
-                      All
-                    </button>
-                  </li>
-                  {collections.map((col) => (
-                    <li key={col.id}>
-                      <button
-                        onClick={() => {
-                          setSelectedCollection(col.slug);
-                          setPage(1);
-                        }}
-                        className={`text-sm transition-colors ${
-                          selectedCollection === col.slug
-                            ? "text-gray-900 font-medium"
-                            : "text-gray-600 hover:text-gray-900"
-                        }`}
-                      >
-                        {col.name}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              {/* Color Filter */}
-              <div className="mb-6">
-                <h3 className="font-semibold text-gray-900 mb-3">Color</h3>
-                <ul className="space-y-2">
-                  <li>
-                    <button
-                      onClick={() => {
-                        setSelectedColor("");
-                        setPage(1);
-                      }}
-                      className={`text-sm transition-colors ${
-                        selectedColor === ""
-                          ? "text-gray-900 font-medium"
-                          : "text-gray-600 hover:text-gray-900"
-                      }`}
-                    >
-                      All
-                    </button>
-                  </li>
-                  {colors.map((color) => (
-                    <li key={color}>
-                      <button
-                        onClick={() => {
-                          setSelectedColor(color);
-                          setPage(1);
-                        }}
-                        className={`text-sm transition-colors ${
-                          selectedColor === color
-                            ? "text-gray-900 font-medium"
-                            : "text-gray-600 hover:text-gray-900"
-                        }`}
-                      >
-                        {color}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              {/* Style Filter */}
-              <div className="mb-6">
-                <h3 className="font-semibold text-gray-900 mb-3">Style</h3>
-                <ul className="space-y-2">
-                  <li>
-                    <button
-                      onClick={() => {
-                        setSelectedStyle("");
-                        setPage(1);
-                      }}
-                      className={`text-sm transition-colors ${
-                        selectedStyle === ""
-                          ? "text-gray-900 font-medium"
-                          : "text-gray-600 hover:text-gray-900"
-                      }`}
-                    >
-                      All
-                    </button>
-                  </li>
-                  {styles.map((style) => (
-                    <li key={style}>
-                      <button
-                        onClick={() => {
-                          setSelectedStyle(style);
-                          setPage(1);
-                        }}
-                        className={`text-sm transition-colors ${
-                          selectedStyle === style
-                            ? "text-gray-900 font-medium"
-                            : "text-gray-600 hover:text-gray-900"
-                        }`}
-                      >
-                        {style}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
+            <ProductFilters
+              onFiltersChange={handleFiltersChange}
+              initialFilters={{
+                collection: filters.collection,
+                size: filters.size,
+                color: filters.color,
+                style: filters.style,
+                material: filters.material,
+              }}
+              showCollectionFilter={true}
+            />
           </aside>
 
           {/* Products Grid */}
@@ -349,12 +255,24 @@ function ShopContent() {
             ) : products.length === 0 ? (
               <div className="text-center py-12">
                 <p className="text-xl text-gray-600">No products found matching your criteria.</p>
-                <button
-                  onClick={resetFilters}
-                  className="mt-4 text-primary-600 hover:text-primary-800 font-medium"
-                >
-                  Clear all filters
-                </button>
+                {hasActiveFilters && (
+                  <button
+                    onClick={() => {
+                      setFilters({
+                        collection: "",
+                        size: "",
+                        color: "",
+                        style: "",
+                        material: "",
+                      });
+                      setPage(1);
+                      window.history.pushState({}, "", "/shop");
+                    }}
+                    className="mt-4 text-primary-600 hover:text-primary-800 font-medium"
+                  >
+                    Clear all filters
+                  </button>
+                )}
               </div>
             ) : (
               <>
