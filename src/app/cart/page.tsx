@@ -96,12 +96,14 @@ export default function InquiryListPage() {
                   >
                     {/* Product Info */}
                     <div className="md:col-span-6 flex gap-4">
-                      <div className="w-24 h-24 bg-gray-100 rounded overflow-hidden flex-shrink-0 relative">
+                      <div className="w-24 h-24 rounded overflow-hidden flex-shrink-0 relative">
                         <Image
                           src={item.image || "/placeholder-rug.svg"}
                           alt={item.name}
                           fill
                           className="object-cover"
+                          sizes="96px"
+                          loading="lazy"
                         />
                       </div>
                       <div className="flex-1">

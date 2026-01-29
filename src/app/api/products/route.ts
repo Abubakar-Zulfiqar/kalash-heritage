@@ -96,8 +96,8 @@ export async function GET(request: NextRequest) {
     const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
     // Validate sortBy to prevent SQL injection
-    const allowedSortColumns = ['createdAt', 'name', 'price'];
-    const safeSortBy = allowedSortColumns.includes(sortBy) ? sortBy : 'createdAt';
+    const allowedSortColumns = ['createdAt', 'name', 'price', 'random'];
+    const safeSortBy = allowedSortColumns.includes(sortBy) ? sortBy : 'random';
     const safeSortOrder = sortOrder === 'ASC' ? 'ASC' : 'DESC';
 
     // Count query
@@ -136,7 +136,7 @@ export async function GET(request: NextRequest) {
       LEFT JOIN collections col ON c."collectionId" = col.id
       LEFT JOIN collections col2 ON s."collectionId" = col2.id
       ${whereClause}
-      ORDER BY p."${safeSortBy}" ${safeSortOrder}
+      ORDER BY ${safeSortBy === 'random' ? 'RANDOM()' : `p."${safeSortBy}" ${safeSortOrder}`}
       LIMIT ${limit} OFFSET ${offset}
     `;
     const products = await db.query(dataQuery, params);

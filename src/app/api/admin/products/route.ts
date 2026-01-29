@@ -24,20 +24,29 @@ export async function POST(request: NextRequest) {
     }
 
     // Auto-generate slug from name
-    const slug = data.name
+    let baseSlug = data.name
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/(^-|-$)/g, "");
 
     const db = await getDatabase();
 
-    // Check for duplicate slug using raw query
-    const existingSlugResult = await db.query(
-      `SELECT id FROM products WHERE slug = $1 AND "deletedAt" IS NULL`,
-      [slug]
-    );
-    if (existingSlugResult && existingSlugResult.length > 0) {
-      return NextResponse.json({ error: "A product with this name already exists" }, { status: 400 });
+    // Generate unique slug by appending a number if slug already exists
+    let slug = baseSlug;
+    let counter = 1;
+    let slugExists = true;
+
+    while (slugExists) {
+      const existingSlugResult = await db.query(
+        `SELECT id FROM products WHERE slug = $1 AND "deletedAt" IS NULL`,
+        [slug]
+      );
+      if (existingSlugResult && existingSlugResult.length > 0) {
+        slug = `${baseSlug}-${counter}`;
+        counter++;
+      } else {
+        slugExists = false;
+      }
     }
 
     // Check for duplicate SKU using raw query

@@ -29,9 +29,7 @@ interface Collection {
 interface SelectedFilters {
   collection: string;
   size: string;
-  color: string;
   style: string;
-  material: string;
 }
 
 function ShopContent() {
@@ -42,7 +40,7 @@ function ShopContent() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalProducts, setTotalProducts] = useState(0);
-  const [sortBy, setSortBy] = useState("createdAt");
+  const [sortBy, setSortBy] = useState("random");
 
   // Read URL params
   const collectionFromUrl = searchParams.get("collection") || "";
@@ -53,9 +51,7 @@ function ShopContent() {
   const [filters, setFilters] = useState<SelectedFilters>({
     collection: collectionFromUrl,
     size: sizeFromUrl,
-    color: "",
     style: "",
-    material: "",
   });
 
   // Sync URL params to state
@@ -98,9 +94,7 @@ function ShopContent() {
     if (filters.collection) params.append("collection", filters.collection);
     if (categoryFromUrl) params.append("category", categoryFromUrl);
     if (filters.size) params.append("size", filters.size);
-    if (filters.color) params.append("color", filters.color);
     if (filters.style) params.append("style", filters.style);
-    if (filters.material) params.append("material", filters.material);
 
     fetch(`/api/products?${params}`)
       .then((res) => res.json())
@@ -145,7 +139,7 @@ function ShopContent() {
   }, []);
 
   // Check if any filter is active
-  const hasActiveFilters = filters.collection || filters.color || filters.style || filters.material || filters.size || categoryFromUrl;
+  const hasActiveFilters = filters.collection || filters.style || filters.size || categoryFromUrl;
 
   // Get active filter context for breadcrumb display
   const getFilterContext = () => {
@@ -216,9 +210,7 @@ function ShopContent() {
               initialFilters={{
                 collection: filters.collection,
                 size: filters.size,
-                color: filters.color,
                 style: filters.style,
-                material: filters.material,
               }}
               showCollectionFilter={true}
             />
@@ -236,6 +228,7 @@ function ShopContent() {
                 onChange={(e) => setSortBy(e.target.value)}
                 className="px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
               >
+                <option value="random">Shuffle</option>
                 <option value="createdAt">Newest</option>
                 <option value="name">Name: A-Z</option>
               </select>
@@ -261,9 +254,7 @@ function ShopContent() {
                       setFilters({
                         collection: "",
                         size: "",
-                        color: "",
                         style: "",
-                        material: "",
                       });
                       setPage(1);
                       window.history.pushState({}, "", "/shop");

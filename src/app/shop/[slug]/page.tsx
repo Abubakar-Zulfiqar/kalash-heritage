@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -165,42 +165,109 @@ export default function ProductDetailPage() {
         </nav>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-          {/* Image Gallery */}
-          <div>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="aspect-square bg-gray-100 mb-4 overflow-hidden relative"
-            >
-              <Image
-                src={product.images[selectedImage] || "/placeholder-rug.svg"}
-                alt={product.name}
-                fill
-                className="object-contain"
-                priority
-              />
-            </motion.div>
+          {/* Image Gallery with Slider */}
+          <div className="relative">
+            {/* Main Image Slider */}
+            <div
+              className="relative overflow-hidden touch-pan-y"
+              onTouchStart={(e) => {
+                const touch = e.touches[0];
+                (e.currentTarget as HTMLElement).dataset.touchStartX = touch.clientX.toString();
+              }}
+              onTouchEnd={(e) => {
+                const touchStartX = parseFloat((e.currentTarget as HTMLElement).dataset.touchStartX || "0");
+                const touchEndX = e.changedTouches[0].clientX;
+                const diff = touchStartX - touchEndX;
 
-            {/* Thumbnails */}
-            <div className="grid grid-cols-4 gap-4">
+                if (Math.abs(diff) > 50) {
+                  if (diff > 0 && selectedImage < product.images.length - 1) {
+                    setSelectedImage(selectedImage + 1);
+                  } else if (diff < 0 && selectedImage > 0) {
+                    setSelectedImage(selectedImage - 1);
+                  }
+                }
+              }}
+            >
+              <motion.div
+                key={selectedImage}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.3 }}
+                className="relative w-full"
+                style={{ aspectRatio: '1/1' }}
+              >
+                <Image
+                  src={product.images[selectedImage] || "/placeholder-rug.svg"}
+                  alt={product.name}
+                  fill
+                  className="object-contain"
+                  priority
+                  sizes="(max-width: 768px) 100vw, 50vw"
+                />
+              </motion.div>
+
+              {/* Navigation Arrows - Hidden on mobile, visible on desktop */}
+              {product.images.length > 1 && (
+                <>
+                  <button
+                    onClick={() => setSelectedImage((prev) => (prev > 0 ? prev - 1 : product.images.length - 1))}
+                    className="hidden md:flex absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 hover:bg-white rounded-full items-center justify-center shadow-lg transition-all"
+                    aria-label="Previous image"
+                  >
+                    <svg className="w-5 h-5 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={() => setSelectedImage((prev) => (prev < product.images.length - 1 ? prev + 1 : 0))}
+                    className="hidden md:flex absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 hover:bg-white rounded-full items-center justify-center shadow-lg transition-all"
+                    aria-label="Next image"
+                  >
+                    <svg className="w-5 h-5 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                </>
+              )}
+            </div>
+
+            {/* Dot Indicators */}
+            {product.images.length > 1 && (
+              <div className="flex justify-center gap-2 mt-4">
+                {product.images.map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setSelectedImage(index)}
+                    className={`w-2.5 h-2.5 rounded-full transition-all ${
+                      selectedImage === index
+                        ? "bg-primary-600 w-6"
+                        : "bg-gray-300 hover:bg-gray-400"
+                    }`}
+                    aria-label={`Go to image ${index + 1}`}
+                  />
+                ))}
+              </div>
+            )}
+
+            {/* Thumbnails - Desktop only */}
+            <div className="hidden md:grid grid-cols-5 gap-2 mt-4">
               {product.images.map((image, index) => (
                 <button
                   key={index}
                   onClick={() => setSelectedImage(index)}
-                  className={`aspect-square bg-gray-100 overflow-hidden border-2 ${
+                  className={`relative aspect-square overflow-hidden rounded border-2 transition-all ${
                     selectedImage === index
                       ? "border-primary-600"
                       : "border-transparent hover:border-gray-300"
                   }`}
                 >
-                  <div className="relative w-full h-full">
-                    <Image
-                      src={image || "/placeholder-rug.svg"}
-                      alt={`${product.name} - ${index + 1}`}
-                      fill
-                      className="object-contain"
-                    />
-                  </div>
+                  <Image
+                    src={image || "/placeholder-rug.svg"}
+                    alt={`${product.name} - ${index + 1}`}
+                    fill
+                    className="object-contain"
+                    sizes="80px"
+                  />
                 </button>
               ))}
             </div>

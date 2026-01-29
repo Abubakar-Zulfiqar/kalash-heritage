@@ -29,17 +29,6 @@ export async function GET(request: NextRequest) {
       paramIndex++;
     }
 
-    // Get distinct colors from products
-    const colorsQuery = `
-      SELECT DISTINCT p.color
-      FROM products p
-      ${collectionJoin}
-      WHERE ${productConditions} AND p.color IS NOT NULL AND p.color != ''
-      ORDER BY p.color
-    `;
-    const colorsResult = await db.query(colorsQuery, params);
-    const colors = colorsResult.map((r: { color: string }) => r.color);
-
     // Get distinct styles from products
     const stylesQuery = `
       SELECT DISTINCT p.style
@@ -50,17 +39,6 @@ export async function GET(request: NextRequest) {
     `;
     const stylesResult = await db.query(stylesQuery, params);
     const styles = stylesResult.map((r: { style: string }) => r.style);
-
-    // Get distinct materials from products
-    const materialsQuery = `
-      SELECT DISTINCT p.material
-      FROM products p
-      ${collectionJoin}
-      WHERE ${productConditions} AND p.material IS NOT NULL AND p.material != ''
-      ORDER BY p.material
-    `;
-    const materialsResult = await db.query(materialsQuery, params);
-    const materials = materialsResult.map((r: { material: string }) => r.material);
 
     // Get sizes - either all sizes or filtered by collection
     // Use DISTINCT ON (name) to deduplicate sizes with same name
@@ -109,9 +87,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       collections,
-      colors,
       styles,
-      materials,
       sizes,
     });
   } catch (error) {

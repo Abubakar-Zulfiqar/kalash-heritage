@@ -52,9 +52,7 @@ interface Product {
 interface SelectedFilters {
   collection: string;
   size: string;
-  color: string;
   style: string;
-  material: string;
 }
 
 export default function CollectionDetailPage({
@@ -77,9 +75,7 @@ export default function CollectionDetailPage({
   const [filters, setFilters] = useState<SelectedFilters>({
     collection: "",
     size: "",
-    color: "",
     style: "",
-    material: "",
   });
 
   // Fetch collection
@@ -123,14 +119,8 @@ export default function CollectionDetailPage({
     if (filters.size) {
       params.append("size", filters.size);
     }
-    if (filters.color) {
-      params.append("color", filters.color);
-    }
     if (filters.style) {
       params.append("style", filters.style);
-    }
-    if (filters.material) {
-      params.append("material", filters.material);
     }
 
     fetch(`/api/products?${params}`)
@@ -329,7 +319,7 @@ export default function CollectionDetailPage({
   }
 
   // For collections without categories, show product listing with dynamic filters
-  const hasActiveFilters = filters.size || filters.color || filters.style || filters.material;
+  const hasActiveFilters = filters.size || filters.style;
 
   return (
     <div className="min-h-screen bg-white">
@@ -371,9 +361,7 @@ export default function CollectionDetailPage({
                 onFiltersChange={handleFiltersChange}
                 initialFilters={{
                   size: filters.size,
-                  color: filters.color,
                   style: filters.style,
-                  material: filters.material,
                 }}
                 showCollectionFilter={false}
               />
@@ -389,19 +377,9 @@ export default function CollectionDetailPage({
                       Size: {filters.size}
                     </span>
                   )}
-                  {filters.color && (
-                    <span className="px-2 py-1 bg-primary-100 text-primary-700 text-sm rounded">
-                      Color: {filters.color}
-                    </span>
-                  )}
                   {filters.style && (
                     <span className="px-2 py-1 bg-primary-100 text-primary-700 text-sm rounded">
                       Style: {filters.style}
-                    </span>
-                  )}
-                  {filters.material && (
-                    <span className="px-2 py-1 bg-primary-100 text-primary-700 text-sm rounded">
-                      Material: {filters.material}
                     </span>
                   )}
                 </div>
@@ -446,9 +424,7 @@ export default function CollectionDetailPage({
                       onClick={() => setFilters({
                         collection: "",
                         size: "",
-                        color: "",
                         style: "",
-                        material: "",
                       })}
                       className="mt-4 text-primary-600 hover:text-primary-800 font-medium"
                     >

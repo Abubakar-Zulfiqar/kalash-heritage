@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import nodemailer from "nodemailer";
+import { Resend } from "resend";
 
 export const dynamic = "force-dynamic";
+
+// Initialize Resend if API key is available
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
 interface InquiryItem {
   productId: string;
@@ -132,35 +136,13 @@ This inquiry was submitted via the Kalash Heritage website.
 </html>
     `.trim();
 
-    // Send email if SMTP is configured
-    const adminEmail = process.env.ADMIN_EMAIL || process.env.SMTP_USER;
+    // Send email - Try Resend first, then fall back to SMTP
+    const adminEmail = process.env.ADMIN_EMAIL || process.env.SMTP_USER || "info@kalashheritage.com";
+    let emailSent = false;
+    let emailError: string | null = null;
 
-    if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS && adminEmail) {
-      const transporter = nodemailer.createTransport({
-        host: process.env.SMTP_HOST,
-        port: parseInt(process.env.SMTP_PORT || "587"),
-        secure: process.env.SMTP_SECURE === "true",
-        auth: {
-          user: process.env.SMTP_USER,
-          pass: process.env.SMTP_PASS,
-        },
-      });
-
-      // Send to admin
-      await transporter.sendMail({
-        from: `"Kalash Heritage Website" <${process.env.SMTP_USER}>`,
-        to: adminEmail,
-        subject: emailSubject,
-        text: emailBody,
-        html: emailHtml,
-      });
-
-      // Send confirmation to customer
-      await transporter.sendMail({
-        from: `"Kalash Heritage" <${process.env.SMTP_USER}>`,
-        to: data.email,
-        subject: "Thank you for your inquiry - Kalash Heritage",
-        text: `
+    // Customer confirmation email content
+    const customerEmailText = `
 Dear ${data.name},
 
 Thank you for your inquiry! We have received your request for the following products:
@@ -173,8 +155,9 @@ If you have any urgent questions, please don't hesitate to contact us directly.
 
 Best regards,
 Kalash Heritage Team
-        `.trim(),
-        html: `
+    `.trim();
+
+    const customerEmailHtml = `
 <!DOCTYPE html>
 <html>
 <head>
@@ -204,8 +187,106 @@ Kalash Heritage Team
   </div>
 </body>
 </html>
-        `.trim(),
+    `.trim();
+
+    // Method 1: Try Resend (recommended for Vercel)
+    if (resend && process.env.RESEND_API_KEY) {
+      console.log("Using Resend for email delivery...");
+      try {
+        // Get the "from" email - must be from a verified domain in Resend
+        // Use onboarding@resend.dev for testing, or your verified domain
+        const fromEmail = process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev";
+
+        // Send to admin
+        console.log("Sending email to admin via Resend:", adminEmail);
+        const adminResult = await resend.emails.send({
+          from: `Kalash Heritage <${fromEmail}>`,
+          to: [adminEmail],
+          subject: emailSubject,
+          text: emailBody,
+          html: emailHtml,
+        });
+        console.log("Admin email sent via Resend:", adminResult);
+
+        // Send confirmation to customer
+        console.log("Sending confirmation to customer via Resend:", data.email);
+        const customerResult = await resend.emails.send({
+          from: `Kalash Heritage <${fromEmail}>`,
+          to: [data.email],
+          subject: "Thank you for your inquiry - Kalash Heritage",
+          text: customerEmailText,
+          html: customerEmailHtml,
+        });
+        console.log("Customer confirmation sent via Resend:", customerResult);
+
+        emailSent = true;
+      } catch (resendError) {
+        console.error("Resend Error:", resendError);
+        emailError = resendError instanceof Error ? resendError.message : "Unknown Resend error";
+        // Will fall back to SMTP
+      }
+    }
+
+    // Method 2: Fall back to SMTP if Resend failed or not configured
+    if (!emailSent && process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
+      console.log("Falling back to SMTP...");
+      console.log("SMTP Configuration:", {
+        host: process.env.SMTP_HOST,
+        port: process.env.SMTP_PORT || "587",
+        secure: process.env.SMTP_SECURE || "false",
       });
+
+      try {
+        const transporter = nodemailer.createTransport({
+          host: process.env.SMTP_HOST,
+          port: parseInt(process.env.SMTP_PORT || "587"),
+          secure: process.env.SMTP_SECURE === "true",
+          auth: {
+            user: process.env.SMTP_USER,
+            pass: process.env.SMTP_PASS,
+          },
+          connectionTimeout: 10000,
+          greetingTimeout: 10000,
+          socketTimeout: 15000,
+        });
+
+        console.log("Verifying SMTP connection...");
+        await transporter.verify();
+        console.log("SMTP connection verified");
+
+        // Send to admin
+        const adminResult = await transporter.sendMail({
+          from: `"Kalash Heritage Website" <${process.env.SMTP_USER}>`,
+          to: adminEmail,
+          subject: emailSubject,
+          text: emailBody,
+          html: emailHtml,
+        });
+        console.log("Admin email sent via SMTP:", adminResult.messageId);
+
+        // Send confirmation to customer
+        const customerResult = await transporter.sendMail({
+          from: `"Kalash Heritage" <${process.env.SMTP_USER}>`,
+          to: data.email,
+          subject: "Thank you for your inquiry - Kalash Heritage",
+          text: customerEmailText,
+          html: customerEmailHtml,
+        });
+        console.log("Customer confirmation sent via SMTP:", customerResult.messageId);
+
+        emailSent = true;
+        emailError = null; // Clear previous Resend error if SMTP succeeded
+      } catch (smtpError) {
+        console.error("SMTP Error:", smtpError);
+        if (!emailError) {
+          emailError = smtpError instanceof Error ? smtpError.message : "Unknown SMTP error";
+        }
+      }
+    }
+
+    if (!emailSent && !emailError) {
+      console.log("No email service configured");
+      emailError = "No email service configured (add RESEND_API_KEY or SMTP settings)";
     }
 
     // Generate WhatsApp link for the response
@@ -219,9 +300,22 @@ Kalash Heritage Team
       whatsappLink = `https://wa.me/${whatsappNumber.replace(/[^0-9]/g, "")}?text=${whatsappMessage}`;
     }
 
+    // Log final status
+    console.log("Inquiry submission complete:", {
+      emailSent,
+      emailError,
+      hasWhatsappLink: !!whatsappLink,
+      customerName: data.name,
+      customerEmail: data.email,
+      itemCount: data.items.length,
+    });
+
     return NextResponse.json({
       success: true,
-      message: "Inquiry submitted successfully",
+      message: emailSent
+        ? "Inquiry submitted successfully! Check your email for confirmation."
+        : "Inquiry recorded. Please contact us via WhatsApp for faster response.",
+      emailSent,
       whatsappLink,
     });
   } catch (error) {

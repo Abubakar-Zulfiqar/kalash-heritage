@@ -77,8 +77,8 @@ export default function Header() {
 
           {/* Right icons */}
           <div className="flex items-center gap-4">
-            {/* User Menu */}
-            {session ? (
+            {/* User Menu - Only show for logged in users (admins) */}
+            {session && (
               <div className="relative">
                 <button
                   onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
@@ -154,26 +154,6 @@ export default function Header() {
                   </div>
                 )}
               </div>
-            ) : (
-              <Link
-                href="/login"
-                className="hidden md:flex items-center gap-2 text-gray-700 hover:text-gray-900 transition-colors"
-              >
-                <svg
-                  className="w-6 h-6"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                  />
-                </svg>
-                <span className="text-sm font-medium">Sign In</span>
-              </Link>
             )}
 
             <Link
@@ -265,10 +245,10 @@ export default function Header() {
                 Contact
               </Link>
 
-              {/* Mobile Auth Links */}
-              <hr className="border-gray-200" />
-              {session ? (
+              {/* Mobile Auth Links - Only show for logged in users */}
+              {session && (
                 <>
+                  <hr className="border-gray-200" />
                   {session.user.role === "admin" && (
                     <Link
                       href="/admin"
@@ -295,14 +275,6 @@ export default function Header() {
                     Sign Out
                   </button>
                 </>
-              ) : (
-                <Link
-                  href="/login"
-                  className="text-primary-600 hover:text-primary-800 font-medium"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Sign In
-                </Link>
               )}
             </div>
           </nav>

@@ -35,12 +35,14 @@ export default function ProductCard({ product }: ProductCardProps) {
 
   return (
     <Link href={`/shop/${product.slug}`} className="group">
-      <div className="aspect-[4/5] bg-gray-100 mb-4 overflow-hidden relative">
+      <div className="aspect-[4/5] mb-4 overflow-hidden relative">
         <Image
           src={product.images[0] || "/placeholder-rug.svg"}
           alt={product.name}
           fill
           className="object-cover group-hover:scale-105 transition-transform duration-500"
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+          loading="lazy"
         />
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
           <button

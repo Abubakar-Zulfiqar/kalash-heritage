@@ -16,18 +16,14 @@ interface FilterCollection {
 
 interface FiltersData {
   collections: FilterCollection[];
-  colors: string[];
   styles: string[];
-  materials: string[];
   sizes: FilterSize[];
 }
 
 interface SelectedFilters {
   collection: string;
   size: string;
-  color: string;
   style: string;
-  material: string;
 }
 
 interface ProductFiltersProps {
@@ -79,9 +75,7 @@ export default function ProductFilters({
 }: ProductFiltersProps) {
   const [filtersData, setFiltersData] = useState<FiltersData>({
     collections: [],
-    colors: [],
     styles: [],
-    materials: [],
     sizes: [],
   });
   const [loading, setLoading] = useState(true);
@@ -89,9 +83,7 @@ export default function ProductFilters({
   const [selectedFilters, setSelectedFilters] = useState<SelectedFilters>({
     collection: initialFilters.collection || "",
     size: initialFilters.size || "",
-    color: initialFilters.color || "",
     style: initialFilters.style || "",
-    material: initialFilters.material || "",
   });
 
   // Fetch filter options from API
@@ -106,9 +98,7 @@ export default function ProductFilters({
       .then((data) => {
         setFiltersData({
           collections: data.collections || [],
-          colors: data.colors || [],
           styles: data.styles || [],
-          materials: data.materials || [],
           sizes: data.sizes || [],
         });
         setLoading(false);
@@ -125,11 +115,9 @@ export default function ProductFilters({
       ...prev,
       collection: initialFilters.collection || "",
       size: initialFilters.size || "",
-      color: initialFilters.color || "",
       style: initialFilters.style || "",
-      material: initialFilters.material || "",
     }));
-  }, [initialFilters.collection, initialFilters.size, initialFilters.color, initialFilters.style, initialFilters.material]);
+  }, [initialFilters.collection, initialFilters.size, initialFilters.style]);
 
   // Notify parent when filters change
   const updateFilter = (key: keyof SelectedFilters, value: string) => {
@@ -142,9 +130,7 @@ export default function ProductFilters({
     const emptyFilters: SelectedFilters = {
       collection: "",
       size: "",
-      color: "",
       style: "",
-      material: "",
     };
     setSelectedFilters(emptyFilters);
     onFiltersChange(emptyFilters);
@@ -153,9 +139,7 @@ export default function ProductFilters({
   const hasActiveFilters =
     selectedFilters.collection ||
     selectedFilters.size ||
-    selectedFilters.color ||
-    selectedFilters.style ||
-    selectedFilters.material;
+    selectedFilters.style;
 
   if (loading) {
     return (
@@ -227,7 +211,7 @@ export default function ProductFilters({
 
       {/* Size Filter */}
       {filtersData.sizes.length > 0 && (
-        <CollapsibleSection title="Size" defaultOpen={filtersData.sizes.length <= 6}>
+        <CollapsibleSection title="Size" defaultOpen={true}>
           <li>
             <button
               onClick={() => updateFilter("size", "")}
@@ -257,41 +241,9 @@ export default function ProductFilters({
         </CollapsibleSection>
       )}
 
-      {/* Color Filter */}
-      {filtersData.colors.length > 0 && (
-        <CollapsibleSection title="Color" defaultOpen={filtersData.colors.length <= 6}>
-          <li>
-            <button
-              onClick={() => updateFilter("color", "")}
-              className={`text-sm transition-colors ${
-                selectedFilters.color === ""
-                  ? "text-gray-900 font-medium"
-                  : "text-gray-600 hover:text-gray-900"
-              }`}
-            >
-              All
-            </button>
-          </li>
-          {filtersData.colors.map((color) => (
-            <li key={color}>
-              <button
-                onClick={() => updateFilter("color", color)}
-                className={`text-sm transition-colors ${
-                  selectedFilters.color === color
-                    ? "text-gray-900 font-medium"
-                    : "text-gray-600 hover:text-gray-900"
-                }`}
-              >
-                {color}
-              </button>
-            </li>
-          ))}
-        </CollapsibleSection>
-      )}
-
       {/* Style Filter */}
       {filtersData.styles.length > 0 && (
-        <CollapsibleSection title="Style" defaultOpen={filtersData.styles.length <= 6}>
+        <CollapsibleSection title="Style" defaultOpen={true}>
           <li>
             <button
               onClick={() => updateFilter("style", "")}
@@ -321,37 +273,6 @@ export default function ProductFilters({
         </CollapsibleSection>
       )}
 
-      {/* Material Filter */}
-      {filtersData.materials.length > 0 && (
-        <CollapsibleSection title="Material" defaultOpen={filtersData.materials.length <= 6}>
-          <li>
-            <button
-              onClick={() => updateFilter("material", "")}
-              className={`text-sm transition-colors ${
-                selectedFilters.material === ""
-                  ? "text-gray-900 font-medium"
-                  : "text-gray-600 hover:text-gray-900"
-              }`}
-            >
-              All
-            </button>
-          </li>
-          {filtersData.materials.map((material) => (
-            <li key={material}>
-              <button
-                onClick={() => updateFilter("material", material)}
-                className={`text-sm transition-colors ${
-                  selectedFilters.material === material
-                    ? "text-gray-900 font-medium"
-                    : "text-gray-600 hover:text-gray-900"
-                }`}
-              >
-                {material}
-              </button>
-            </li>
-          ))}
-        </CollapsibleSection>
-      )}
     </div>
   );
 }

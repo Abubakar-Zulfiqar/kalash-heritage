@@ -64,13 +64,19 @@ export default function InquiryFormPage() {
       // Clear the inquiry list
       clearInquiry();
 
-      // Show success and redirect
-      toast.success("Inquiry submitted successfully!");
+      // Show appropriate success message
+      if (data.emailSent) {
+        toast.success("Inquiry submitted! Check your email for confirmation.");
+      } else {
+        toast.success("Inquiry recorded! Contact us via WhatsApp for faster response.");
+      }
 
-      // If WhatsApp link is available, offer to open it
+      // If WhatsApp link is available and email wasn't sent, strongly encourage WhatsApp
       if (data.whatsappLink) {
         const openWhatsApp = confirm(
-          "Your inquiry has been submitted! Would you like to also contact us via WhatsApp for faster response?"
+          data.emailSent
+            ? "Would you also like to contact us via WhatsApp for faster response?"
+            : "We couldn't send an email confirmation. Would you like to contact us via WhatsApp to ensure we received your inquiry?"
         );
         if (openWhatsApp) {
           window.open(data.whatsappLink, "_blank");
@@ -253,12 +259,14 @@ export default function InquiryFormPage() {
               <div className="space-y-4 mb-6 max-h-80 overflow-y-auto">
                 {items.map((item) => (
                   <div key={item.productId} className="flex gap-3">
-                    <div className="relative w-16 h-16 bg-gray-100 rounded overflow-hidden flex-shrink-0">
+                    <div className="relative w-16 h-16 rounded overflow-hidden flex-shrink-0">
                       <Image
                         src={item.image || "/placeholder-rug.svg"}
                         alt={item.name}
                         fill
                         className="object-cover"
+                        sizes="64px"
+                        loading="lazy"
                       />
                       <span className="absolute -top-1 -right-1 w-5 h-5 bg-gray-600 text-white text-xs rounded-full flex items-center justify-center">
                         {item.quantity}

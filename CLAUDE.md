@@ -28,6 +28,7 @@ npm run dev          # Development server (user runs manually)
 npm run build        # Production build - run only when necessary
 npm run lint         # ESLint check
 npm run seed         # Seed database with sample data
+npm run fix-slugs    # Regenerate slugs for all entities
 ```
 
 ## Critical Architecture Patterns
@@ -233,12 +234,16 @@ NEXTAUTH_URL=http://localhost:3000
 NEXTAUTH_SECRET=your-secret-here
 BLOB_READ_WRITE_TOKEN=vercel_blob_...
 
-# Email notifications (optional)
+# Email - Option 1: Resend (recommended for Vercel)
+RESEND_API_KEY=re_xxxxx
+RESEND_FROM_EMAIL=noreply@kalashheritage.com  # Must be from verified domain
+ADMIN_EMAIL=admin@kalashheritage.com
+
+# Email - Option 2: SMTP (fallback)
 SMTP_HOST=smtp.example.com
 SMTP_PORT=587
 SMTP_USER=user@example.com
 SMTP_PASS=password
-ADMIN_EMAIL=admin@kalashheritage.com
 
 # WhatsApp (optional)
 WHATSAPP_NUMBER=+971505787476
