@@ -64,6 +64,9 @@ if ! healthy; then
 fi
 pm2 save >/dev/null
 
+echo "==> Warming the image cache in the background"
+nohup nice -n 10 node "$SRC/scripts/warm-images.mjs" >> "$APP_ROOT/logs/warm-images.log" 2>&1 < /dev/null &
+
 echo "==> Cleaning old releases (keeping $KEEP_RELEASES)"
 ls -1dt "$APP_ROOT"/releases/*/ | tail -n +$((KEEP_RELEASES + 1)) | xargs -r rm -rf
 

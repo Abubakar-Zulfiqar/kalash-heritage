@@ -1,33 +1,29 @@
-import { withAuth } from "next-auth/middleware";
-import { NextResponse } from "next/server";
+import { getToken } from "next-auth/jwt";
+import { NextResponse, type NextRequest } from "next/server";
 
-export default withAuth(
-  function middleware(req) {
-    const token = req.nextauth.token;
-    const isAdminRoute = req.nextUrl.pathname.startsWith("/admin");
+// Behind Nginx the request's own origin is the internal one (localhost:3000),
+// so redirects are built from the public site URL instead.
+function siteUrl(path: string, req: NextRequest) {
+  return new URL(path, process.env.NEXTAUTH_URL || req.nextUrl.origin);
+}
 
-    // Redirect non-admin users trying to access admin routes
-    if (isAdminRoute && token?.role !== "admin") {
-      return NextResponse.redirect(
-        new URL("/login?error=unauthorized", req.url)
-      );
-    }
+export async function proxy(req: NextRequest) {
+  const { pathname, search } = req.nextUrl;
+  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
 
-    return NextResponse.next();
-  },
-  {
-    callbacks: {
-      authorized: ({ token, req }) => {
-        // Allow access to login page without auth
-        if (req.nextUrl.pathname.startsWith("/login")) {
-          return true;
-        }
-        // Require auth for protected routes
-        return !!token;
-      },
-    },
+  if (!token) {
+    const login = siteUrl("/login", req);
+    login.searchParams.set("callbackUrl", pathname + search);
+    return NextResponse.redirect(login);
   }
-);
+
+  // Signed in, but not an admin
+  if (pathname.startsWith("/admin") && token.role !== "admin") {
+    return NextResponse.redirect(siteUrl("/login?error=unauthorized", req));
+  }
+
+  return NextResponse.next();
+}
 
 export const config = {
   matcher: ["/admin/:path*", "/account/:path*"],

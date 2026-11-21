@@ -11,7 +11,7 @@ export default function KnowledgeHubPage() {
       description:
         "The journey begins with carefully selecting premium wool. Our artisans meticulously sort and clean the raw wool, removing impurities to ensure only the finest quality fibers are used in our rugs.",
       image:
-        "/data/process/MANUFACTURING PROCESS/Wool Sorting & Cleaning/A (1).jpeg",
+        "/data/process/MANUFACTURING PROCESS/Wool Sorting and Cleaning/A (1).jpeg",
     },
     {
       title: "Natural Dyeing",

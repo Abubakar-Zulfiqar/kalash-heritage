@@ -16,9 +16,11 @@ interface ProductCardProps {
     material?: string;
     color?: string;
   };
+  /** Load immediately (for cards visible without scrolling) */
+  priority?: boolean;
 }
 
-export default function ProductCard({ product }: ProductCardProps) {
+export default function ProductCard({ product, priority = false }: ProductCardProps) {
   const addItem = useInquiryStore((state) => state.addItem);
 
   const handleAddToInquiry = (e: React.MouseEvent) => {
@@ -42,7 +44,7 @@ export default function ProductCard({ product }: ProductCardProps) {
           fill
           className="object-cover group-hover:scale-105 transition-transform duration-500"
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-          loading="lazy"
+          priority={priority}
         />
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
           <button

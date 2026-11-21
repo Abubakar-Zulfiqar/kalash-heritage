@@ -9,7 +9,12 @@ import toast from "react-hot-toast";
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl");
+  // Only allow redirects to pages on this site (blocks ?callbackUrl=https://evil.example)
+  const rawCallbackUrl = searchParams.get("callbackUrl");
+  const callbackUrl =
+    rawCallbackUrl && rawCallbackUrl.startsWith("/") && !rawCallbackUrl.startsWith("//")
+      ? rawCallbackUrl
+      : null;
   const error = searchParams.get("error");
 
   const [email, setEmail] = useState("");
