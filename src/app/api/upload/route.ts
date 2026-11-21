@@ -1,9 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
+import { randomBytes } from "crypto";
+import { mkdir, unlink, writeFile } from "fs/promises";
+import path from "path";
 import { authOptions } from "@/lib/auth";
-import { put, del } from "@vercel/blob";
+import { UPLOAD_DIR, UPLOAD_URL_PREFIX, resolveUploadPath } from "@/lib/uploads";
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
+
+const EXTENSIONS: Record<string, string> = {
+  "image/jpeg": ".jpg",
+  "image/png": ".png",
+  "image/webp": ".webp",
+  "image/gif": ".gif",
+};
 
 export async function POST(request: NextRequest) {
   try {
@@ -21,8 +32,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate file type
-    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
-    if (!allowedTypes.includes(file.type)) {
+    const extension = EXTENSIONS[file.type];
+    if (!extension) {
       return NextResponse.json(
         { error: "Invalid file type. Only JPEG, PNG, WebP, and GIF are allowed." },
         { status: 400 }
@@ -38,24 +49,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create unique filename
-    const timestamp = Date.now();
-    const originalName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
-    const filename = `uploads/${timestamp}-${originalName}`;
+    // Unique, URL-safe filename; the extension comes from the validated MIME type
+    const baseName = path
+      .parse(file.name)
+      .name.replace(/[^a-zA-Z0-9-]/g, "_")
+      .slice(0, 60);
+    const filename = `${Date.now()}-${randomBytes(4).toString("hex")}-${baseName}${extension}`;
 
-    // Upload to Vercel Blob
-    const blob = await put(filename, file, {
-      access: "public",
-    });
+    await mkdir(UPLOAD_DIR, { recursive: true });
+    await writeFile(path.join(UPLOAD_DIR, filename), Buffer.from(await file.arrayBuffer()));
 
-    return NextResponse.json({ url: blob.url, filename: blob.pathname }, { status: 201 });
+    const url = `${UPLOAD_URL_PREFIX}${filename}`;
+    return NextResponse.json({ url, filename }, { status: 201 });
   } catch (error) {
     console.error("Error uploading file:", error);
     return NextResponse.json({ error: "Failed to upload file" }, { status: 500 });
   }
 }
 
-// Optional: DELETE endpoint to remove images
 export async function DELETE(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -66,13 +77,18 @@ export async function DELETE(request: NextRequest) {
 
     const { url } = await request.json();
 
-    if (!url) {
+    if (!url || typeof url !== "string") {
       return NextResponse.json({ error: "No URL provided" }, { status: 400 });
     }
 
-    // Only delete Vercel Blob URLs
-    if (url.includes("vercel-storage.com") || url.includes("blob.vercel-storage.com")) {
-      await del(url);
+    // Only delete files we host ourselves
+    if (url.startsWith(UPLOAD_URL_PREFIX)) {
+      const filePath = resolveUploadPath(url.slice(UPLOAD_URL_PREFIX.length));
+      if (filePath) {
+        await unlink(filePath).catch((err) => {
+          if (err.code !== "ENOENT") throw err;
+        });
+      }
     }
 
     return NextResponse.json({ success: true });

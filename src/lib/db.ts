@@ -59,30 +59,49 @@ async function initializeDataSource() {
   const { ShippingAddress } = await import("@/entities/ShippingAddress");
   console.log(`  ⏱️ Entity imports: ${Date.now() - entityStart}ms`);
 
+  // Remote hosts (e.g. Neon) need SSL; a database on the same server does not.
+  const dbHost = new URL(process.env.DATABASE_URL!).hostname;
+  const isLocalDb = ["localhost", "127.0.0.1", "::1"].includes(dbHost);
+  const useSsl = process.env.DATABASE_SSL
+    ? process.env.DATABASE_SSL === "true"
+    : !isLocalDb;
+
   const dataSource = new DataSource({
     type: "postgres",
     url: process.env.DATABASE_URL,
-    // TEMPORARILY ENABLED: Sync production schema with new collection/category/size columns
-    synchronize: true,
+    // Schema sync on startup. Defaults to on (previous behaviour); set
+    // DB_SYNCHRONIZE=false in production once the schema is stable.
+    synchronize: process.env.DB_SYNCHRONIZE !== "false",
     // Disable verbose query logging - only log errors
     logging: ["error"],
     entities: [User, Product, Collection, Category, Size, Order, OrderItem, Cart, CartItem, ShippingAddress],
     subscribers: [],
     migrations: [],
-    // Connection pool settings for better performance
+    // Connection pool settings
     extra: {
-      // Maximum number of connections in pool
-      max: 10,
-      // Connection timeout - increase for Neon cold starts
-      connectionTimeoutMillis: 30000,
-      // Idle timeout
-      idleTimeoutMillis: 30000,
+      max: Number(process.env.DB_POOL_MAX || 20),
+      // Local Postgres answers in milliseconds; remote/serverless needs longer
+      connectionTimeoutMillis: isLocalDb ? 5000 : 30000,
+      // Keep warm connections around on a long-running server
+      idleTimeoutMillis: isLocalDb ? 300000 : 30000,
+      keepAlive: true,
+      application_name: "kalash-heritage",
     },
-    // SSL required for Neon
-    ssl: {
-      rejectUnauthorized: false,
-    },
+    ssl: useSsl ? { rejectUnauthorized: false } : false,
   });
+
+  // On a long-running server every route shares this one DataSource, but each
+  // route bundle has its own copy of the entity classes. TypeORM only knows the
+  // copies registered above, so resolve any other copy by its table name.
+  const { getMetadataArgsStorage } = await import("typeorm");
+  const getRepositoryByClass = dataSource.getRepository.bind(dataSource);
+  dataSource.getRepository = ((target: any) => {
+    if (typeof target === "function" && !dataSource.hasMetadata(target)) {
+      const table = getMetadataArgsStorage().tables.find((t) => t.target === target);
+      if (table?.name) return getRepositoryByClass(table.name);
+    }
+    return getRepositoryByClass(target);
+  }) as typeof dataSource.getRepository;
 
   const initStart = Date.now();
   await dataSource.initialize();

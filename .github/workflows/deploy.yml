@@ -1,0 +1,50 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# One deploy at a time; a newer push waits for the running one to finish.
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment:
+      name: production
+      url: https://kalashheritage.com
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up SSH
+        run: |
+          install -m 700 -d ~/.ssh
+          echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          echo "${{ secrets.DEPLOY_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+          printf 'Host prod\n  HostName %s\n  User %s\n  IdentityFile ~/.ssh/deploy_key\n  IdentitiesOnly yes\n  ServerAliveInterval 30\n' \
+            "${DEPLOY_HOST#*@}" "${DEPLOY_HOST%@*}" > ~/.ssh/config
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+
+      - name: Sync source to server
+        run: |
+          rsync -az --delete \
+            --exclude node_modules --exclude .next --exclude .git \
+            --exclude '.env*' --exclude 'public/uploads/*' --exclude .DS_Store \
+            ./ prod:/var/www/kalash/source/
+
+      - name: Build and release on server
+        run: ssh prod 'bash /var/www/kalash/source/scripts/server-release.sh'
+
+      - name: Check the live site
+        run: |
+          for path in / /api/collections; do
+            code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "https://kalashheritage.com$path")
+            echo "$path -> $code"
+            [ "$code" = 200 ] || exit 1
+          done
